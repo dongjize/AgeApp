@@ -1,14 +1,12 @@
 import os
 
 """
-Extract age information from jpg files and generate label files.
+Extract age information from jpg filename and generate corresponding labels.
 """
-
-
 
 PROJECT_PATH = os.path.dirname(os.path.dirname(__file__))
 
-img_path = PROJECT_PATH + "/trainingModel/utkface-new/test/"
+img_path = PROJECT_PATH + "/trainingModel/utkface-new/crop_part1/"
 
 
 def extract_age(path):
@@ -35,7 +33,8 @@ def extract_age(path):
     print(img)
     print(age_label)
     print(img_path)
-    print("Train imgs:", len(img), "......Train labels", len(age_label))
+    print("Imgs:", len(img), "......Corresponding labels", len(age_label))
+
 
 #
 # # change file name
@@ -51,7 +50,6 @@ def extract_age(path):
 
 
 if __name__ == '__main__':
-
     extract_age(img_path)
 
     # rename_file(path)
