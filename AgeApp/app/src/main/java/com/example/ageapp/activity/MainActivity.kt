@@ -1,7 +1,8 @@
-package com.example.ageapp
+package com.example.ageapp.activity
 
 import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
+import com.example.ageapp.R
 
 class MainActivity : AppCompatActivity() {
 
