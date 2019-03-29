@@ -125,7 +125,7 @@ def convert_to(data_set, name, i, base_path, dataset_name):
 
 
 def get_meta(mat_path, db):
-    if len(db)==2:
+    if len(db) == 2:
         meta = loadmat(mat_path[0])
         full_path = meta[db[0]][0, 0]["full_path"][0]
         dob = meta[db[0]][0, 0]["dob"][0]  # Matlab serial date number
@@ -149,7 +149,7 @@ def get_meta(mat_path, db):
         data = {"file_name": full_path, "gender": gender, "age": age, "score": face_score,
                 "second_score": second_face_score}
         dataset2 = pd.DataFrame(data)
-        dataset = pd.concat([dataset1,dataset2],axis=0)
+        dataset = pd.concat([dataset1, dataset2], axis=0)
     else:
         meta = loadmat(mat_path)
         full_path = meta[db][0, 0]["full_path"][0]
@@ -184,7 +184,7 @@ def main(db_path, db_name, test_size, cpu_cores, tfrecords_bath_dir):
     # data_sets = data_sets[data_sets.age >= 0]
     # data_sets = data_sets[data_sets.age <= 100]
 
-    train_sets, test_sets = train_test_split(data_sets, test_size=test_size, random_state=2017)
+    train_sets, test_sets = train_test_split(data_sets, test_size=test_size, random_state=2019)
     train_sets.reset_index(drop=True, inplace=True)
     test_sets.reset_index(drop=True, inplace=True)
     train_nums = train_sets.shape[0]
@@ -193,13 +193,19 @@ def main(db_path, db_name, test_size, cpu_cores, tfrecords_bath_dir):
     test_idx = np.linspace(0, test_nums, math.ceil(cpu_cores / 4.0) + 1, dtype=np.int)
     # multi cpu
     pool = multiprocessing.Pool(processes=cpu_cores)
+    # for p in range(cpu_cores):
+    #     pool.apply_async(convert_to,
+    #                      (train_sets[train_idx[p]:train_idx[p + 1] - 1].copy().reset_index(drop=True), 'train', p,
+    #                       tfrecords_bath_dir, db_name,))
+    # for p in range(cpu_cores // 4):
+    #     pool.apply_async(convert_to,
+    #                      (test_sets[test_idx[p]:test_idx[p + 1] - 1].copy().reset_index(drop=True), 'test', p,
+    #                       tfrecords_bath_dir, db_name,))
     for p in range(cpu_cores):
-        pool.apply_async(convert_to,
-                         (train_sets[train_idx[p]:train_idx[p + 1] - 1].copy().reset_index(drop=True), 'train', p,
+        pool.apply_async(convert_to, (train_sets[train_idx[p]:train_idx[p + 1] - 1].copy().reset_index(drop=True), 'train', p,
                           tfrecords_bath_dir, db_name,))
     for p in range(cpu_cores // 4):
-        pool.apply_async(convert_to,
-                         (test_sets[test_idx[p]:test_idx[p + 1] - 1].copy().reset_index(drop=True), 'test', p,
+        pool.apply_async(convert_to, (test_sets[test_idx[p]:test_idx[p + 1] - 1].copy().reset_index(drop=True), 'test', p,
                           tfrecords_bath_dir, db_name,))
     pool.close()
     pool.join()
@@ -221,6 +227,8 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("--imdb_db", type=str, default="./data/imdb_crop/imdb.mat")
     parser.add_argument("--wiki_db", type=str, default="./data/wiki_crop/wiki.mat")
+    # parser.add_argument("--imdb_db", type=str, default="C:/Mason/UniMelb/Subjects/19S1/Final Project/data/imdb_crop/imdb.mat")
+    # parser.add_argument("--wiki_db", type=str, default="C:/Mason/UniMelb/Subjects/19S1/Final Project/data/wiki_crop/wiki.mat")
     parser.add_argument("--imdb", action="store_true", default=False, help="Set this flag if use imdb datasets")
     parser.add_argument("--wiki", action="store_true", default=False, help="Set this flag if use wiki datasets")
     parser.add_argument("--base_path", type=str, default="./data", help="Base path of datasets and tfrecords")
@@ -229,7 +237,8 @@ if __name__ == '__main__':
     args = parser.parse_args()
     if (args.imdb and args.wiki):
         print("Using imdb and wiki datasets")
-        main(db_path=[args.imdb_db,args.wiki_db], db_name=["imdb","wiki"], test_size=args.test_size, cpu_cores=args.nworks,
+        main(db_path=[args.imdb_db, args.wiki_db], db_name=["imdb", "wiki"], test_size=args.test_size,
+             cpu_cores=args.nworks,
              tfrecords_bath_dir=args.base_path)
     elif args.imdb:
         print("Using imdb dataset")
@@ -239,5 +248,9 @@ if __name__ == '__main__':
         print("Using wiki dataset")
         main(db_path=args.wiki_db, db_name="wiki", test_size=args.test_size, cpu_cores=args.nworks,
              tfrecords_bath_dir=args.base_path)
+    # elif args.wiki:
+    #     print("Using wiki dataset")
+    #     main(db_path="C:/Mason/UniMelb/Subjects/19S1/Final Project/Code/AgeApp/trainingModel/data/wiki_crop/wiki.mat", db_name="wiki", test_size=args.test_size, cpu_cores=args.nworks,
+    #          tfrecords_bath_dir="C:/Mason/UniMelb/Subjects/19S1/Final Project/Code/AgeApp/trainingModel/data")
     else:
         raise NameError("You should choose one of --imdb or --wiki when running this script.")
