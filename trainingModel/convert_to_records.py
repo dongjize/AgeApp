@@ -75,14 +75,14 @@ def convert_to(data_set, name):
     # cols = images.shape[2]
     # depth = images.shape[3]
 
-    # tfrecords_path = os.path.join(base_path, name)
-    # if not os.path.exists(tfrecords_path):
-    #     os.mkdir(tfrecords_path)
-    # filename = os.path.join(tfrecords_path, name + '-%.3d' % i + '.tfrecords')
+    tfrecords_path = os.path.join("./data", name)
+    if not os.path.exists(tfrecords_path):
+        os.mkdir(tfrecords_path)
+    filename = os.path.join(tfrecords_path, name + '.tfrecords')
 
 
 
-    filename = os.path.join(name + '.tfrecords')
+    # filename = os.path.join(name + '.tfrecords')
     print('Writing', filename)
     with tf.python_io.TFRecordWriter(filename) as writer:
         for index in tqdm(range(num_examples)):
