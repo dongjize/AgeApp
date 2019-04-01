@@ -16,18 +16,19 @@
 
 package com.example.ageapp.activity
 
-import android.os.Bundle
-import android.support.v7.app.AppCompatActivity
-import com.example.ageapp.R
+import android.support.v4.app.FragmentActivity
+import android.support.v4.content.ContextCompat
+import android.widget.Toast
 
-class CameraActivity : AppCompatActivity() {
+/**
+ * This file illustrates Kotlin's Extension Functions by extending FragmentActivity.
+ */
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_camera)
-        savedInstanceState ?: supportFragmentManager.beginTransaction()
-            .replace(R.id.container, Camera2BasicFragment.newInstance())
-            .commit()
-    }
-
+/**
+ * Shows a [Toast] on the UI thread.
+ *
+ * @param text The message to show
+ */
+fun FragmentActivity.showToast(text: String) {
+    runOnUiThread { Toast.makeText(this, text, Toast.LENGTH_SHORT).show() }
 }

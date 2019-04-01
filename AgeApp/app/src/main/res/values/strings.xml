@@ -15,4 +15,9 @@
 
         ]]>
     </string>
+    <string name="splash_page_title">COMP90019 Final Project</string>
+    <string name="splash_page_subtitle">Age Recognition App</string>
+    <string name="splash_page_author1">875095 Jize Dong</string>
+    <string name="splash_page_author2">875095 Minsheng Wang</string>
+    <string name="splash_page_supervisor">Supervised by: Prof. Richard Sinnott</string>
 </resources>
