@@ -46,12 +46,12 @@
             android:textSize="16sp" />
 
         <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:gravity="center"
-            android:text="@string/splash_page_author2"
-            android:textColor="@color/textBlack"
-            android:textSize="16sp" />
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:text="@string/splash_page_author2"
+                android:textColor="@color/textBlack"
+                android:textSize="16sp"/>
 
         <TextView
             android:layout_width="wrap_content"
