@@ -22,7 +22,7 @@ import android.app.Dialog
 import android.os.Bundle
 import android.support.v4.app.DialogFragment
 import com.example.ageapp.R
-import com.example.android.camera2basic.REQUEST_CAMERA_PERMISSION
+import com.example.ageapp.REQUEST_CAMERA_PERMISSION
 
 /**
  * Shows OK/Cancel confirmation dialog about camera permission.

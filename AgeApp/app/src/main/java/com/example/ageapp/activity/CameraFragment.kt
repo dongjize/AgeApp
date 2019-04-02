@@ -21,11 +21,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.content.res.Configuration
-import android.graphics.ImageFormat
-import android.graphics.Matrix
-import android.graphics.Point
-import android.graphics.RectF
-import android.graphics.SurfaceTexture
+import android.graphics.*
 import android.hardware.camera2.CameraAccessException
 import android.hardware.camera2.CameraCaptureSession
 import android.hardware.camera2.CameraCharacteristics
@@ -51,6 +47,7 @@ import android.view.TextureView
 import android.view.View
 import android.view.ViewGroup
 import com.example.ageapp.R
+import com.example.ageapp.REQUEST_CAMERA_PERMISSION
 import com.example.ageapp.dialog.ConfirmationDialog
 import com.example.ageapp.util.ImageSaver
 import com.example.ageapp.view.AutoFitTextureView
@@ -274,7 +271,8 @@ class CameraFragment : Fragment(), View.OnClickListener,
 
     override fun onActivityCreated(savedInstanceState: Bundle?) {
         super.onActivityCreated(savedInstanceState)
-        file = File(activity!!.getExternalFilesDir(null), PIC_FILE_NAME)
+
+//        file = File(activity?.getExternalFilesDir(null), "".plus(System.currentTimeMillis()).plus(".jpg"))
     }
 
     override fun onResume() {
@@ -328,7 +326,7 @@ class CameraFragment : Fragment(), View.OnClickListener,
      * @param height The height of available size for camera preview
      */
     private fun setUpCameraOutputs(width: Int, height: Int) {
-        val manager = activity!!.getSystemService(Context.CAMERA_SERVICE) as CameraManager
+        val manager = activity?.getSystemService(Context.CAMERA_SERVICE) as CameraManager
         try {
             for (cameraId in manager.cameraIdList) {
                 val characteristics = manager.getCameraCharacteristics(cameraId)
@@ -365,7 +363,7 @@ class CameraFragment : Fragment(), View.OnClickListener,
                 val swappedDimensions = areDimensionsSwapped(displayRotation)
 
                 val displaySize = Point()
-                activity!!.windowManager.defaultDisplay.getSize(displaySize)
+                activity?.windowManager?.defaultDisplay?.getSize(displaySize)
                 val rotatedPreviewWidth = if (swappedDimensions) height else width
                 val rotatedPreviewHeight = if (swappedDimensions) width else height
                 var maxPreviewWidth = if (swappedDimensions) displaySize.y else displaySize.x
@@ -450,7 +448,7 @@ class CameraFragment : Fragment(), View.OnClickListener,
         }
         setUpCameraOutputs(width, height)
         configureTransform(width, height)
-        val manager = activity!!.getSystemService(Context.CAMERA_SERVICE) as CameraManager
+        val manager = activity?.getSystemService(Context.CAMERA_SERVICE) as CameraManager
         try {
             // Wait for camera to open - 2.5 seconds is sufficient
             if (!cameraOpenCloseLock.tryAcquire(2500, TimeUnit.MILLISECONDS)) {
@@ -559,7 +557,7 @@ class CameraFragment : Fragment(), View.OnClickListener,
                     }
 
                     override fun onConfigureFailed(session: CameraCaptureSession) {
-                        activity!!.showToast("Failed")
+                        activity?.showToast("Failed")
                     }
                 }, null
             )
@@ -661,7 +659,7 @@ class CameraFragment : Fragment(), View.OnClickListener,
             val captureBuilder = cameraDevice?.createCaptureRequest(
                 CameraDevice.TEMPLATE_STILL_CAPTURE
             )?.apply {
-                addTarget(imageReader?.surface)
+                addTarget(imageReader!!.surface)
 
                 // Sensor orientation is 90 for most devices, or 270 for some devices (eg. Nexus 5X)
                 // We have to take that into account and rotate JPEG properly.
@@ -686,9 +684,9 @@ class CameraFragment : Fragment(), View.OnClickListener,
                     request: CaptureRequest,
                     result: TotalCaptureResult
                 ) {
-                    activity!!.showToast("Saved: $file")
-                    Log.d(TAG, file.toString())
-                    unlockFocus()
+                    activity?.showToast("Saved: $file") // TODO
+
+
                 }
             }
 
@@ -750,7 +748,7 @@ class CameraFragment : Fragment(), View.OnClickListener,
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent) {
         super.onActivityResult(requestCode, resultCode, data)
         if (requestCode == 1) {
-            activity!!.showToast("album!")
+            activity?.showToast("album!")
         }
     }
 
