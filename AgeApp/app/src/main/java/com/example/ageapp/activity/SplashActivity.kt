@@ -12,9 +12,7 @@ class SplashActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_splash)
 
-        val handler = Handler()
-
-        handler.postDelayed({
+        Handler().postDelayed({
             val intent = Intent(this, CameraActivity::class.java)
             startActivity(intent)
             finish()

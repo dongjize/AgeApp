@@ -14,31 +14,59 @@
  limitations under the License.
 -->
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent">
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
 
     <com.example.ageapp.view.AutoFitTextureView
-            android:id="@+id/texture"
+        android:id="@+id/texture"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentStart="true"
+        android:layout_alignParentTop="true" />
+
+    <RelativeLayout
+        android:id="@+id/control"
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/relative_height"
+        android:layout_alignParentStart="true"
+        android:layout_alignParentBottom="true"
+        android:layout_marginStart="0dp"
+        android:layout_marginBottom="0dp"
+        android:background="@color/control_background">
+
+        <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_alignParentStart="true"
-            android:layout_alignParentTop="true"/>
+            android:layout_centerInParent="true"
+            android:orientation="horizontal">
 
-    <FrameLayout
-            android:id="@+id/control"
-            android:layout_width="match_parent"
-            android:layout_height="112dp"
-            android:layout_alignParentStart="true"
-            android:layout_alignParentBottom="true"
-            android:background="#cc4285f4">
-
-        <Button
+            <Button
                 android:id="@+id/picture"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_gravity="center"
-                android:text="@string/picture"/>
+                android:layout_margin="8dp"
+                android:text="@string/picture" />
 
-    </FrameLayout>
+            <Button
+                android:id="@+id/album"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_margin="8dp"
+                android:text="@string/album" />
+
+        </LinearLayout>
+
+
+        <!--<ImageButton-->
+        <!--android:id="@+id/info"-->
+        <!--style="@android:style/Widget.Material.Light.Button.Borderless"-->
+        <!--android:layout_width="wrap_content"-->
+        <!--android:layout_height="wrap_content"-->
+        <!--android:layout_gravity="center_vertical|end"-->
+        <!--android:contentDescription="@string/description_info"-->
+        <!--android:padding="@dimen/image_button_padding"-->
+        <!--android:src="@drawable/ic_action_info" />-->
+
+    </RelativeLayout>
 
 </RelativeLayout>
