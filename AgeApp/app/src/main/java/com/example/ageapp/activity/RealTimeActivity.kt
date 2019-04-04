@@ -20,13 +20,13 @@ import android.os.Bundle
 import android.support.v7.app.AppCompatActivity
 import com.example.ageapp.R
 
-class CameraActivity : AppCompatActivity() {
+class RealTimeActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_camera)
+        setContentView(R.layout.activity_real_time)
         savedInstanceState ?: supportFragmentManager.beginTransaction()
-            .replace(R.id.container, CameraFragment.newInstance())
+            .replace(R.id.container, RealTimeFragment.newInstance())
             .commit()
     }
 

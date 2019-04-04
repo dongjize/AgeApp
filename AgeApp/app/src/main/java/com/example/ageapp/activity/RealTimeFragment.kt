@@ -59,7 +59,7 @@ import java.util.concurrent.Semaphore
 import java.util.concurrent.TimeUnit
 import kotlin.collections.ArrayList
 
-class CameraFragment : Fragment(), View.OnClickListener,
+class RealTimeFragment : Fragment(), View.OnClickListener,
     ActivityCompat.OnRequestPermissionsResultCallback {
 
     /**
@@ -114,19 +114,19 @@ class CameraFragment : Fragment(), View.OnClickListener,
 
         override fun onOpened(cameraDevice: CameraDevice) {
             cameraOpenCloseLock.release()
-            this@CameraFragment.cameraDevice = cameraDevice
+            this@RealTimeFragment.cameraDevice = cameraDevice
             createCameraPreviewSession()
         }
 
         override fun onDisconnected(cameraDevice: CameraDevice) {
             cameraOpenCloseLock.release()
             cameraDevice.close()
-            this@CameraFragment.cameraDevice = null
+            this@RealTimeFragment.cameraDevice = null
         }
 
         override fun onError(cameraDevice: CameraDevice, error: Int) {
             onDisconnected(cameraDevice)
-            this@CameraFragment.activity?.finish()
+            this@RealTimeFragment.activity?.finish()
         }
 
     }
@@ -261,7 +261,7 @@ class CameraFragment : Fragment(), View.OnClickListener,
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View? = inflater.inflate(R.layout.fragment_camera, container, false)
+    ): View? = inflater.inflate(R.layout.fragment_real_time, container, false)
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         view.findViewById<View>(R.id.picture).setOnClickListener(this)
@@ -438,7 +438,7 @@ class CameraFragment : Fragment(), View.OnClickListener,
     }
 
     /**
-     * Opens the camera specified by [CameraFragment.cameraId].
+     * Opens the camera specified by [RealTimeFragment.cameraId].
      */
     private fun openCamera(width: Int, height: Int) {
         val permission = ContextCompat.checkSelfPermission(activity!!, Manifest.permission.CAMERA)
@@ -779,7 +779,7 @@ class CameraFragment : Fragment(), View.OnClickListener,
         /**
          * Tag for the [Log].
          */
-        private val TAG = "CameraFragment"
+        private val TAG = "RealTimeFragment"
 
         /**
          * Camera state: Showing camera preview.
@@ -873,6 +873,6 @@ class CameraFragment : Fragment(), View.OnClickListener,
         }
 
         @JvmStatic
-        fun newInstance(): CameraFragment = CameraFragment()
+        fun newInstance(): RealTimeFragment = RealTimeFragment()
     }
 }

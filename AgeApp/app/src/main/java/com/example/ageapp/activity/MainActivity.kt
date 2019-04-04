@@ -14,21 +14,18 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
         setContentView(R.layout.activity_main)
 
         realTime.setOnClickListener(this)
-        takePhoto.setOnClickListener(this)
-        choosePhoto.setOnClickListener(this)
+        usePhoto.setOnClickListener(this)
     }
 
     override fun onClick(v: View?) {
         when (v?.id) {
             R.id.realTime -> {
-                val intent = Intent(this, CameraActivity::class.java)
+                val intent = Intent(this, RealTimeActivity::class.java)
                 startActivity(intent)
             }
-            R.id.takePhoto -> {
-                showToast("take photo")
-            }
-            R.id.choosePhoto -> {
-                showToast("choose from album")
+            R.id.usePhoto -> {
+                val intent = Intent(this, PhotoActivity::class.java)
+                startActivity(intent)
             }
         }
     }

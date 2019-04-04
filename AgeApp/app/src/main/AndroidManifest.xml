@@ -28,7 +28,9 @@
                 <action android:name="android.intent.action.MAIN" />
             </intent-filter>
         </activity>
-        <activity android:name=".activity.CameraActivity" />
+        <activity android:name=".activity.RealTimeActivity" />
+        <activity android:name=".activity.ResultActivity" />
+        <activity android:name=".activity.PhotoActivity" />
 
 
     </application>
