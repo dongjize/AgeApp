@@ -1,5 +1,6 @@
 package com.example.ageapp.activity
 
+import android.Manifest
 import android.app.Activity
 import android.content.Intent
 import android.graphics.Bitmap
@@ -13,6 +14,12 @@ import com.example.ageapp.R
 import kotlinx.android.synthetic.main.activity_photo.*
 import java.io.InputStream
 import java.lang.Exception
+import android.content.pm.PackageManager
+import android.support.v4.content.ContextCompat
+import com.example.ageapp.REQUEST_WRITE_EXTERNAL_STORAGE_PERMISSION
+import com.example.ageapp.dialog.ConfirmationDialog
+import com.example.android.camera2basic.ErrorDialog
+
 
 class PhotoActivity : AppCompatActivity(), View.OnClickListener {
 
@@ -52,8 +59,16 @@ class PhotoActivity : AppCompatActivity(), View.OnClickListener {
                 if (resultCode == Activity.RESULT_OK && data != null) {
                     val picBitmap: Bitmap = data.extras.get("data") as Bitmap
                     ivPhoto.setImageBitmap(picBitmap)
-                    showToast("take photo!")
-                    MediaStore.Images.Media.insertImage(contentResolver, picBitmap, "title", "description")
+
+                    val permission = ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                    if (permission != PackageManager.PERMISSION_GRANTED) {
+                        requestWriteStoragePermission()
+                        return
+                    }
+
+                    var haha = MediaStore.Images.Media.insertImage(contentResolver, picBitmap, "title", "description")
+                    showToast("take photo: ".plus(haha))
+
                 }
             }
 
@@ -74,4 +89,34 @@ class PhotoActivity : AppCompatActivity(), View.OnClickListener {
             }
         }
     }
+
+
+    private fun requestWriteStoragePermission() {
+        if (shouldShowRequestPermissionRationale(Manifest.permission.WRITE_EXTERNAL_STORAGE)) {
+            ConfirmationDialog().show(supportFragmentManager, "dialog")
+//            showToast("aaaaaaaaaa")
+        } else {
+            requestPermissions(
+                arrayOf(Manifest.permission.WRITE_EXTERNAL_STORAGE),
+                REQUEST_WRITE_EXTERNAL_STORAGE_PERMISSION
+            )
+        }
+    }
+
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<String>,
+        grantResults: IntArray
+    ) {
+        if (requestCode == REQUEST_WRITE_EXTERNAL_STORAGE_PERMISSION) {
+            if (grantResults.size != 1 || grantResults[0] != PackageManager.PERMISSION_GRANTED) {
+                ErrorDialog.newInstance(getString(R.string.request_permission))
+                    .show(supportFragmentManager, "dialog")
+//                showToast("bbbbbbbb")
+            }
+        } else {
+            super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        }
+    }
+
 }
