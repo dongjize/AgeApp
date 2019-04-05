@@ -22,3 +22,9 @@ package com.example.ageapp
 val REQUEST_CAMERA_PERMISSION = 1
 @JvmField
 val REQUEST_WRITE_EXTERNAL_STORAGE_PERMISSION = 2
+
+@JvmField
+val TAKE_PHOTO_REQUEST = 1
+
+@JvmField
+val SELECT_ALBUM_REQUEST = 2

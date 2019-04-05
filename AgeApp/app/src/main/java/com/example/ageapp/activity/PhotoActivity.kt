@@ -2,6 +2,7 @@ package com.example.ageapp.activity
 
 import android.Manifest
 import android.app.Activity
+import android.content.ContentValues
 import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
@@ -15,14 +16,21 @@ import kotlinx.android.synthetic.main.activity_photo.*
 import java.io.InputStream
 import java.lang.Exception
 import android.content.pm.PackageManager
+import android.os.Build
+import android.os.Environment
 import android.support.v4.content.ContextCompat
 import com.example.ageapp.REQUEST_WRITE_EXTERNAL_STORAGE_PERMISSION
+import com.example.ageapp.SELECT_ALBUM_REQUEST
+import com.example.ageapp.TAKE_PHOTO_REQUEST
 import com.example.ageapp.dialog.ConfirmationDialog
 import com.example.android.camera2basic.ErrorDialog
+import java.io.File
+import java.io.FileInputStream
 
 
 class PhotoActivity : AppCompatActivity(), View.OnClickListener {
 
+    private var filePath: String? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -30,23 +38,35 @@ class PhotoActivity : AppCompatActivity(), View.OnClickListener {
 
         takePhoto.setOnClickListener(this)
         selectAlbum.setOnClickListener(this)
-    }
 
+    }
 
     override fun onClick(v: View?) {
         when (v?.id) {
             R.id.takePhoto -> {
-                val takePhotoIntent = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
-                if (takePhotoIntent.resolveActivity(packageManager) != null) {
-                    startActivityForResult(takePhotoIntent, 1)
+
+                filePath =
+                    Environment.getExternalStorageDirectory().path + "/" + System.currentTimeMillis() + ".jpg"
+
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                    takePhotoLaterThan7((File(filePath)).absolutePath)
+
+                } else {
+                    val takePhotoIntent = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
+                    val uri = Uri.fromFile(File(filePath))
+                    takePhotoIntent.putExtra(MediaStore.EXTRA_OUTPUT, uri)
+                    if (takePhotoIntent.resolveActivity(packageManager) != null) {
+                        startActivityForResult(takePhotoIntent, TAKE_PHOTO_REQUEST)
+                    }
                 }
+
             }
             R.id.selectAlbum -> {
                 val choosePhotoIntent = Intent()
                 choosePhotoIntent.type = "image/*"
                 choosePhotoIntent.action = Intent.ACTION_GET_CONTENT
                 if (choosePhotoIntent.resolveActivity(packageManager) != null) {
-                    startActivityForResult(Intent.createChooser(choosePhotoIntent, "select pic"), 2)
+                    startActivityForResult(Intent.createChooser(choosePhotoIntent, "select pic"), SELECT_ALBUM_REQUEST)
                 }
             }
         }
@@ -55,9 +75,10 @@ class PhotoActivity : AppCompatActivity(), View.OnClickListener {
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
         when (requestCode) {
-            1 -> {
+            TAKE_PHOTO_REQUEST -> {
                 if (resultCode == Activity.RESULT_OK && data != null) {
-                    val picBitmap: Bitmap = data.extras.get("data") as Bitmap
+                    val inStream: InputStream = FileInputStream(filePath)
+                    val picBitmap: Bitmap = BitmapFactory.decodeStream(inStream)
                     ivPhoto.setImageBitmap(picBitmap)
 
                     val permission = ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE)
@@ -65,18 +86,17 @@ class PhotoActivity : AppCompatActivity(), View.OnClickListener {
                         requestWriteStoragePermission()
                         return
                     }
-
-                    var haha = MediaStore.Images.Media.insertImage(contentResolver, picBitmap, "title", "description")
-                    showToast("take photo: ".plus(haha))
+                    // store the photo
+                    MediaStore.Images.Media.insertImage(contentResolver, picBitmap, "title", "description")
 
                 }
             }
 
-            2 -> {
+            SELECT_ALBUM_REQUEST -> {
                 if (resultCode == Activity.RESULT_OK && data != null) {
                     val uri: Uri? = data.data
                     if (uri != null) {
-                        var inStream: InputStream? = null
+                        val inStream: InputStream?
                         try {
                             inStream = contentResolver.openInputStream(uri)
                             val selPicBitmap: Bitmap = BitmapFactory.decodeStream(inStream)
@@ -94,7 +114,6 @@ class PhotoActivity : AppCompatActivity(), View.OnClickListener {
     private fun requestWriteStoragePermission() {
         if (shouldShowRequestPermissionRationale(Manifest.permission.WRITE_EXTERNAL_STORAGE)) {
             ConfirmationDialog().show(supportFragmentManager, "dialog")
-//            showToast("aaaaaaaaaa")
         } else {
             requestPermissions(
                 arrayOf(Manifest.permission.WRITE_EXTERNAL_STORAGE),
@@ -112,10 +131,27 @@ class PhotoActivity : AppCompatActivity(), View.OnClickListener {
             if (grantResults.size != 1 || grantResults[0] != PackageManager.PERMISSION_GRANTED) {
                 ErrorDialog.newInstance(getString(R.string.request_permission))
                     .show(supportFragmentManager, "dialog")
-//                showToast("bbbbbbbb")
             }
         } else {
             super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        }
+    }
+
+
+    private fun takePhotoLaterThan7(absolutePath: String) {
+        val mCameraTempUri: Uri
+        try {
+            val values = ContentValues(1)
+            values.put(MediaStore.Images.Media.MIME_TYPE, "image/jpg")
+            values.put(MediaStore.Images.Media.DATA, absolutePath)
+            mCameraTempUri = contentResolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values)!!
+            val intent = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
+            intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION).addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION)
+            intent.putExtra(MediaStore.EXTRA_OUTPUT, mCameraTempUri)
+            intent.putExtra(MediaStore.EXTRA_VIDEO_QUALITY, 1)
+            startActivityForResult(intent, TAKE_PHOTO_REQUEST)
+        } catch (e: Exception) {
+            e.printStackTrace()
         }
     }
 
