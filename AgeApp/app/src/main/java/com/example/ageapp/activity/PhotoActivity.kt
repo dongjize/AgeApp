@@ -2,7 +2,6 @@ package com.example.ageapp.activity
 
 import android.Manifest
 import android.app.Activity
-import android.content.ContentValues
 import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
@@ -36,6 +35,7 @@ class PhotoActivity : AppCompatActivity(), View.OnClickListener {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_photo)
 
+        analyzeBtn.setOnClickListener(this)
         takePhoto.setOnClickListener(this)
         selectAlbum.setOnClickListener(this)
 
@@ -43,13 +43,15 @@ class PhotoActivity : AppCompatActivity(), View.OnClickListener {
 
     override fun onClick(v: View?) {
         when (v?.id) {
-            R.id.takePhoto -> {
+            R.id.analyzeBtn -> {
+                showToast("analyze!")
+            }
 
+            R.id.takePhoto -> {
                 filePath = Environment.getExternalStorageDirectory().path + "/" + System.currentTimeMillis() + ".jpg"
 
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
                     takePhotoLaterThan7((File(filePath)).absolutePath)
-
                 } else {
                     val takePhotoIntent = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
                     val uri = Uri.fromFile(File(filePath))
@@ -58,8 +60,8 @@ class PhotoActivity : AppCompatActivity(), View.OnClickListener {
                         startActivityForResult(takePhotoIntent, TAKE_PHOTO_REQUEST)
                     }
                 }
-
             }
+
             R.id.selectAlbum -> {
                 val choosePhotoIntent = Intent()
                 choosePhotoIntent.type = "image/*"
@@ -80,7 +82,8 @@ class PhotoActivity : AppCompatActivity(), View.OnClickListener {
                     val picBitmap: Bitmap = BitmapFactory.decodeStream(inStream)
                     ivPhoto.setImageBitmap(picBitmap)
 
-                    val permission = ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                    val permission =
+                        ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE)
                     if (permission != PackageManager.PERMISSION_GRANTED) {
                         requestWriteStoragePermission()
                         return

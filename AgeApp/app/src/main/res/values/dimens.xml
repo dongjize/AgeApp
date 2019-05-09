@@ -2,4 +2,5 @@
 <resources>
     <dimen name="relative_height">112dp</dimen>
     <dimen name="image_button_padding">20dp</dimen>
+    <dimen name="fab_margin">16dp</dimen>
 </resources>
