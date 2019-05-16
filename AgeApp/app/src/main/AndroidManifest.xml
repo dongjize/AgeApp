@@ -21,10 +21,6 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme"
         tools:ignore="GoogleAppIndexingWarning">
-        <activity
-            android:name=".HahaActivity"
-            android:label="@string/title_activity_haha"
-            android:theme="@style/AppTheme.NoActionBar"></activity>
         <activity android:name=".activity.MainActivity" />
         <activity android:name=".activity.SplashActivity">
             <intent-filter>
@@ -36,6 +32,8 @@
         <activity android:name=".activity.RealTimeActivity" />
         <activity android:name=".activity.ResultActivity" />
         <activity android:name=".activity.PhotoActivity" />
+
+
     </application>
 
 </manifest>
