@@ -27,17 +27,32 @@ import android.support.v4.content.FileProvider
 import android.util.Log
 import com.example.ageapp.*
 import com.example.ageapp.util.FileUtil
+import com.example.ageapp.util.ImageUtils
+import org.tensorflow.contrib.android.TensorFlowInferenceInterface
 import java.io.IOException
 
 
 class PhotoActivity : AppCompatActivity(), View.OnClickListener {
 
+    private var bitmap: Bitmap? = null
     private var filePath: String? = null
 
 
     private var imgUri: Uri? = null
     private var imageFile: File? = null
     private var imageCropFile: File? = null
+
+
+    private val MODEL_PATH = "file:///android_asset/keras_model_01.pb"
+    private val INPUT_NAME = "input_1"
+    private val OUTPUT_NAME1 = "output_1"
+    private val OUTPUT_NAME2 = "output_2"
+    private var tf: TensorFlowInferenceInterface? = null
+
+    private var floatValues: FloatArray? = null
+    private var agePredictionList = FloatArray(1000)
+    private var genderPredictionList = FloatArray(1000)
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -47,12 +62,18 @@ class PhotoActivity : AppCompatActivity(), View.OnClickListener {
         takePhoto.setOnClickListener(this)
         selectAlbum.setOnClickListener(this)
 
+        tf = TensorFlowInferenceInterface(assets, MODEL_PATH)
+
     }
 
     override fun onClick(v: View?) {
         when (v?.id) {
             R.id.analyzeBtn -> {
-                showToast("analyze!")
+                if (bitmap != null) {
+                    predict(bitmap!!)
+                } else {
+                    showToast("Please take or choose a photo")
+                }
             }
 
             R.id.takePhoto -> {
@@ -88,9 +109,8 @@ class PhotoActivity : AppCompatActivity(), View.OnClickListener {
             TAKE_PHOTO_REQUEST -> {
                 if (resultCode == Activity.RESULT_OK && data != null) {
                     val inStream: InputStream = FileInputStream(filePath)
-                    val picBitmap: Bitmap =
-                        rotateImageView(readPictureDegree(filePath!!), BitmapFactory.decodeStream(inStream))
-                    ivPhoto.setImageBitmap(picBitmap)
+                    bitmap = rotateImageView(readPictureDegree(filePath!!), BitmapFactory.decodeStream(inStream))
+                    ivPhoto.setImageBitmap(bitmap)
 
                     val permission = ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE)
                     if (permission != PackageManager.PERMISSION_GRANTED) {
@@ -98,7 +118,7 @@ class PhotoActivity : AppCompatActivity(), View.OnClickListener {
                         return
                     }
                     // store the photo
-                    MediaStore.Images.Media.insertImage(contentResolver, picBitmap, "title", "description")
+                    MediaStore.Images.Media.insertImage(contentResolver, bitmap, "title", "description")
 
 
 //                    val sourceUri =
@@ -128,7 +148,8 @@ class PhotoActivity : AppCompatActivity(), View.OnClickListener {
 
             REQUEST_CODE_CAPTURE_CROP -> {
                 imageCropFile?.let {
-                    ivPhoto.setImageBitmap(BitmapFactory.decodeFile(it.absolutePath))
+                    bitmap = BitmapFactory.decodeFile(it.absolutePath)
+                    ivPhoto.setImageBitmap(bitmap)
                 }
             }
         }
@@ -237,7 +258,7 @@ class PhotoActivity : AppCompatActivity(), View.OnClickListener {
                 intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION) //添加这一句表示对目标应用临时授权该Uri所代表的文件
                 intent.setDataAndType(sourceUri, "image/*")  //设置数据源,必须是由FileProvider创建的ContentUri
 
-                var imgCropUri = Uri.fromFile(it)
+                val imgCropUri = Uri.fromFile(it)
                 intent.putExtra(MediaStore.EXTRA_OUTPUT, imgCropUri) //设置输出  不需要ContentUri,否则失败
                 Log.d("tag", "input $sourceUri")
                 Log.d("tag", "output ${Uri.fromFile(it)}")
@@ -248,5 +269,71 @@ class PhotoActivity : AppCompatActivity(), View.OnClickListener {
             startActivityForResult(intent, REQUEST_CODE_CAPTURE_CROP)
         }
     }
+
+
+    fun argmax(array: FloatArray): Array<Any> {
+        var best = -1
+        var bestConfidence = 0.0f
+
+        for (i in array.indices) {
+            val value = array[i]
+            if (value > bestConfidence) {
+                bestConfidence = value
+                best = i
+            }
+        }
+
+        return arrayOf(best, bestConfidence)
+    }
+
+
+    private fun predict(bitmap: Bitmap) {
+        //Resize  the  image  into  224  x  224
+        val resizedImage = ImageUtils.processBitmap(bitmap, 64)
+
+        //Normalize  the  pixels
+        floatValues = ImageUtils.normalizeBitmap(resizedImage, 64, 127.5f, 1.0f)
+
+        assert(tf != null)
+        //Pass  input  into  the  tensorflow
+        tf!!.feed(INPUT_NAME, floatValues, 1, 64, 64, 3)
+
+        //compute  agePredictionList
+        tf!!.run(arrayOf(OUTPUT_NAME1, OUTPUT_NAME2))
+
+        //copy  the  output  into  the  agePredictionList  array
+        tf!!.fetch(OUTPUT_NAME1, genderPredictionList)
+        tf!!.fetch(OUTPUT_NAME2, agePredictionList)
+
+        //Obtained  highest  prediction
+        val results = argmax(agePredictionList)
+        val age = results[0] as Int
+        val confidence = results[1] as Float
+
+        val haha = argmax(genderPredictionList)
+        val gender = haha[0] as Int
+
+        try {
+
+            val conf = (confidence * 100).toString().substring(0, 5)
+
+            //Convert  predicted  class  index  into  actual  label  name
+
+            showToast(age.toString().plus(" ").plus(conf).plus(" ").plus(gender))
+
+//            //Display  result  on  UI
+//            runOnUiThread {
+//                progressBar.dismiss()
+//                resultView.setText(label + "  :  " + conf + "%")
+//            }
+
+        } catch (e: Exception) {
+
+
+        }
+
+
+    }
+
 
 }
