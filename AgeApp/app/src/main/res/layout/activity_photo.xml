@@ -5,15 +5,15 @@
     android:layout_height="match_parent">
 
 
-    <!--<TextView-->
-    <!--android:layout_width="wrap_content"-->
-    <!--android:layout_height="wrap_content"-->
-    <!--android:layout_centerInParent="true"-->
-    <!--android:text="Add a Photo"-->
-    <!--android:textColor="@color/colorSplashBg" />-->
+    <!--<ImageView-->
+    <!--android:id="@+id/ivPhoto"-->
+    <!--android:layout_width="match_parent"-->
+    <!--android:layout_height="match_parent"-->
+    <!--android:layout_marginBottom="96dp"-->
+    <!--android:background="@color/colorSplashBg" />-->
 
-    <ImageView
-        android:id="@+id/ivPhoto"
+    <com.example.ageapp.view.MyImageView
+        android:id="@+id/photoView"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_marginBottom="96dp"

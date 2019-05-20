@@ -22,11 +22,7 @@ import java.io.File
 import java.io.FileInputStream
 import android.media.ExifInterface
 import android.graphics.Matrix
-import android.provider.MediaStore.AUTHORITY
-import android.support.v4.content.FileProvider
-import android.util.Log
 import com.example.ageapp.*
-import com.example.ageapp.util.FileUtil
 import com.example.ageapp.util.ImageUtils
 import org.tensorflow.contrib.android.TensorFlowInferenceInterface
 import java.io.IOException
@@ -43,10 +39,10 @@ class PhotoActivity : AppCompatActivity(), View.OnClickListener {
     private var imageCropFile: File? = null
 
 
-    private val MODEL_PATH = "file:///android_asset/keras_model_01.pb"
-    private val INPUT_NAME = "input_1"
-    private val OUTPUT_NAME1 = "output_1"
-    private val OUTPUT_NAME2 = "output_2"
+    private val ageModelPath = "file:///android_asset/keras_model_01.pb"
+    private val inputName = "input_1"
+    private val outputName1 = "output_1"
+    private val outputName2 = "output_2"
     private var tf: TensorFlowInferenceInterface? = null
 
     private var floatValues: FloatArray? = null
@@ -62,7 +58,7 @@ class PhotoActivity : AppCompatActivity(), View.OnClickListener {
         takePhoto.setOnClickListener(this)
         selectAlbum.setOnClickListener(this)
 
-        tf = TensorFlowInferenceInterface(assets, MODEL_PATH)
+        tf = TensorFlowInferenceInterface(assets, ageModelPath)
 
     }
 
@@ -89,7 +85,6 @@ class PhotoActivity : AppCompatActivity(), View.OnClickListener {
                         startActivityForResult(takePhotoIntent, TAKE_PHOTO_REQUEST)
                     }
                 }
-//                gotoCaptureCrop()
             }
 
             R.id.selectAlbum -> {
@@ -109,8 +104,12 @@ class PhotoActivity : AppCompatActivity(), View.OnClickListener {
             TAKE_PHOTO_REQUEST -> {
                 if (resultCode == Activity.RESULT_OK && data != null) {
                     val inStream: InputStream = FileInputStream(filePath)
-                    bitmap = rotateImageView(readPictureDegree(filePath!!), BitmapFactory.decodeStream(inStream))
-                    ivPhoto.setImageBitmap(bitmap)
+
+                    val options = BitmapFactory.Options()
+                    options.inPreferredConfig = Bitmap.Config.RGB_565
+                    bitmap = rotateImageView(readPictureDegree(filePath!!), BitmapFactory.decodeStream(inStream, null, options))
+                    photoView.setImageBitmap(bitmap)
+
 
                     val permission = ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE)
                     if (permission != PackageManager.PERMISSION_GRANTED) {
@@ -120,38 +119,33 @@ class PhotoActivity : AppCompatActivity(), View.OnClickListener {
                     // store the photo
                     MediaStore.Images.Media.insertImage(contentResolver, bitmap, "title", "description")
 
-
-//                    val sourceUri =
-//                        FileProvider.getUriForFile(this, AUTHORITY, imageFile!!) //通过FileProvider创建一个content类型的Uri
-//                    gotoCrop(sourceUri)
                 }
             }
 
             SELECT_ALBUM_REQUEST -> {
-//                if (resultCode == Activity.RESULT_OK && data != null) {
-//                    val uri: Uri? = data.data
-//                    if (uri != null) {
-//                        val inStream: InputStream?
-//                        try {
-//                            inStream = contentResolver.openInputStream(uri)
-//                            val selPicBitmap: Bitmap = BitmapFactory.decodeStream(inStream)
-//                            ivPhoto.setImageBitmap(selPicBitmap)
-//                        } catch (e: Exception) {
-//                            showToast(e.message!!)
-//                        }
-//                    }
-//                }
-                data?.let {
-                    gotoCrop(it.data!!)
+                if (resultCode == Activity.RESULT_OK && data != null) {
+                    val uri: Uri? = data.data
+                    if (uri != null) {
+                        val inStream: InputStream?
+                        try {
+                            inStream = contentResolver.openInputStream(uri)
+                            val options = BitmapFactory.Options()
+                            options.inPreferredConfig = Bitmap.Config.RGB_565
+                            bitmap = BitmapFactory.decodeStream(inStream, null, options)
+                            photoView.setImageBitmap(bitmap)
+                        } catch (e: Exception) {
+                            showToast(e.message!!)
+                        }
+                    }
                 }
             }
 
-            REQUEST_CODE_CAPTURE_CROP -> {
-                imageCropFile?.let {
-                    bitmap = BitmapFactory.decodeFile(it.absolutePath)
-                    ivPhoto.setImageBitmap(bitmap)
-                }
-            }
+//            REQUEST_CODE_CAPTURE_CROP -> {
+//                imageCropFile?.let {
+//                    bitmap = BitmapFactory.decodeFile(it.absolutePath)
+//                    photoView.setImageBitmap(bitmap)
+//                }
+//            }
         }
     }
 
@@ -200,12 +194,12 @@ class PhotoActivity : AppCompatActivity(), View.OnClickListener {
         return degree
     }
 
-    private fun rotateImageView(angle: Int, bitmap: Bitmap): Bitmap {
+    private fun rotateImageView(angle: Int, bitmap: Bitmap?): Bitmap {
         var returnBm: Bitmap? = null
         val matrix = Matrix()
         matrix.postRotate(angle.toFloat())
         try {
-            returnBm = Bitmap.createBitmap(bitmap, 0, 0, bitmap.width, bitmap.height, matrix, true)
+            returnBm = Bitmap.createBitmap(bitmap!!, 0, 0, bitmap.width, bitmap.height, matrix, true)
         } catch (e: OutOfMemoryError) {
         }
 
@@ -213,62 +207,62 @@ class PhotoActivity : AppCompatActivity(), View.OnClickListener {
             returnBm = bitmap
         }
         if (bitmap != returnBm) {
-            bitmap.recycle()
+            bitmap!!.recycle()
         }
-        return returnBm
+        return returnBm!!
     }
 
 
-    private fun gotoCaptureCrop() {
-        imageFile = FileUtil.createImageFile()
+//    private fun gotoCaptureCrop() {
+//        imageFile = FileUtil.createImageFile()
+//
+//        imageFile?.let {
+//            val intent = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
+//
+//            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+//                intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+//                imgUri = FileProvider.getUriForFile(this, AUTHORITY, it)
+//                intent.putExtra(MediaStore.EXTRA_OUTPUT, imgUri)
+//            } else {
+//                intent.putExtra(MediaStore.EXTRA_OUTPUT, Uri.fromFile(it))
+//            }
+//
+//            intent.putExtra("outputFormat", Bitmap.CompressFormat.JPEG.toString())
+//            intent.resolveActivity(packageManager)?.let {
+//                startActivityForResult(intent, TAKE_PHOTO_REQUEST)
+//            }
+//        }
+//    }
 
-        imageFile?.let {
-            val intent = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
 
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-                intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                imgUri = FileProvider.getUriForFile(this, AUTHORITY, it)
-                intent.putExtra(MediaStore.EXTRA_OUTPUT, imgUri)
-            } else {
-                intent.putExtra(MediaStore.EXTRA_OUTPUT, Uri.fromFile(it))
-            }
-
-            intent.putExtra("outputFormat", Bitmap.CompressFormat.JPEG.toString())
-            intent.resolveActivity(packageManager)?.let {
-                startActivityForResult(intent, TAKE_PHOTO_REQUEST)
-            }
-        }
-    }
-
-
-    private fun gotoCrop(sourceUri: Uri) {
-        imageCropFile = FileUtil.createImageFile(true) //创建一个保存裁剪后照片的File
-        imageCropFile?.let {
-            val intent = Intent("com.android.camera.action.CROP")
-            intent.putExtra("crop", "true")
-            intent.putExtra("aspectX", 1)    //X方向上的比例
-            intent.putExtra("aspectY", 1)    //Y方向上的比例
-            intent.putExtra("outputX", 500)  //裁剪区的宽
-            intent.putExtra("outputY", 500) //裁剪区的高
-            intent.putExtra("scale ", true)  //是否保留比例
-            intent.putExtra("return-data", false) //是否在Intent中返回图片
-            intent.putExtra("outputFormat", Bitmap.CompressFormat.JPEG.toString()) //设置输出图片的格式
-
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-                intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION) //添加这一句表示对目标应用临时授权该Uri所代表的文件
-                intent.setDataAndType(sourceUri, "image/*")  //设置数据源,必须是由FileProvider创建的ContentUri
-
-                val imgCropUri = Uri.fromFile(it)
-                intent.putExtra(MediaStore.EXTRA_OUTPUT, imgCropUri) //设置输出  不需要ContentUri,否则失败
-                Log.d("tag", "input $sourceUri")
-                Log.d("tag", "output ${Uri.fromFile(it)}")
-            } else {
-                intent.setDataAndType(Uri.fromFile(imageFile!!), "image/*")
-                intent.putExtra(MediaStore.EXTRA_OUTPUT, Uri.fromFile(it))
-            }
-            startActivityForResult(intent, REQUEST_CODE_CAPTURE_CROP)
-        }
-    }
+//    private fun gotoCrop(sourceUri: Uri) {
+//        imageCropFile = FileUtil.createImageFile(true) //创建一个保存裁剪后照片的File
+//        imageCropFile?.let {
+//            val intent = Intent("com.android.camera.action.CROP")
+//            intent.putExtra("crop", "true")
+//            intent.putExtra("aspectX", 1)    //X方向上的比例
+//            intent.putExtra("aspectY", 1)    //Y方向上的比例
+//            intent.putExtra("outputX", 500)  //裁剪区的宽
+//            intent.putExtra("outputY", 500) //裁剪区的高
+//            intent.putExtra("scale ", true)  //是否保留比例
+//            intent.putExtra("return-data", false) //是否在Intent中返回图片
+//            intent.putExtra("outputFormat", Bitmap.CompressFormat.JPEG.toString()) //设置输出图片的格式
+//
+//            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+//                intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION) //添加这一句表示对目标应用临时授权该Uri所代表的文件
+//                intent.setDataAndType(sourceUri, "image/*")  //设置数据源,必须是由FileProvider创建的ContentUri
+//
+//                val imgCropUri = Uri.fromFile(it)
+//                intent.putExtra(MediaStore.EXTRA_OUTPUT, imgCropUri) //设置输出  不需要ContentUri,否则失败
+//                Log.d("tag", "input $sourceUri")
+//                Log.d("tag", "output ${Uri.fromFile(it)}")
+//            } else {
+//                intent.setDataAndType(Uri.fromFile(imageFile!!), "image/*")
+//                intent.putExtra(MediaStore.EXTRA_OUTPUT, Uri.fromFile(it))
+//            }
+//            startActivityForResult(intent, REQUEST_CODE_CAPTURE_CROP)
+//        }
+//    }
 
 
     fun argmax(array: FloatArray): Array<Any> {
@@ -296,14 +290,14 @@ class PhotoActivity : AppCompatActivity(), View.OnClickListener {
 
         assert(tf != null)
         //Pass  input  into  the  tensorflow
-        tf!!.feed(INPUT_NAME, floatValues, 1, 64, 64, 3)
+        tf!!.feed(inputName, floatValues, 1, 64, 64, 3)
 
         //compute  agePredictionList
-        tf!!.run(arrayOf(OUTPUT_NAME1, OUTPUT_NAME2))
+        tf!!.run(arrayOf(outputName1, outputName2))
 
         //copy  the  output  into  the  agePredictionList  array
-        tf!!.fetch(OUTPUT_NAME1, genderPredictionList)
-        tf!!.fetch(OUTPUT_NAME2, agePredictionList)
+        tf!!.fetch(outputName1, genderPredictionList)
+        tf!!.fetch(outputName2, agePredictionList)
 
         //Obtained  highest  prediction
         val results = argmax(agePredictionList)
@@ -313,24 +307,15 @@ class PhotoActivity : AppCompatActivity(), View.OnClickListener {
         val haha = argmax(genderPredictionList)
         val gender = haha[0] as Int
 
-        try {
+//        try {
 
-            val conf = (confidence * 100).toString().substring(0, 5)
+        val conf = (confidence * 100).toString().substring(0, 5)
+        //Convert  predicted  class  index  into  actual  label  name
+        showToast(age.toString().plus(" ").plus(conf).plus(" ").plus(gender))
+        photoView.showAge()
 
-            //Convert  predicted  class  index  into  actual  label  name
-
-            showToast(age.toString().plus(" ").plus(conf).plus(" ").plus(gender))
-
-//            //Display  result  on  UI
-//            runOnUiThread {
-//                progressBar.dismiss()
-//                resultView.setText(label + "  :  " + conf + "%")
-//            }
-
-        } catch (e: Exception) {
-
-
-        }
+//        } catch (e: Exception) {
+//        }
 
 
     }
