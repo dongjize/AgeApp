@@ -4,21 +4,12 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-
-    <!--<ImageView-->
-    <!--android:id="@+id/ivPhoto"-->
-    <!--android:layout_width="match_parent"-->
-    <!--android:layout_height="match_parent"-->
-    <!--android:layout_marginBottom="96dp"-->
-    <!--android:background="@color/colorSplashBg" />-->
-
-    <com.example.ageapp.view.MyImageView
-        android:id="@+id/photoView"
+    <com.example.ageapp.view.ImageLayout
+        android:id="@+id/imageLayout"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_marginBottom="96dp"
-        android:background="@color/colorSplashBg" />
-
+        android:layout_gravity="center"
+        android:layout_marginBottom="96dp" />
 
     <android.support.design.widget.FloatingActionButton
         android:id="@+id/selectAlbum"

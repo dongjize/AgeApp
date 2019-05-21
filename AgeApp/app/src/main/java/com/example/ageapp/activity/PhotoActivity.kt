@@ -22,6 +22,9 @@ import java.io.File
 import java.io.FileInputStream
 import android.media.ExifInterface
 import android.graphics.Matrix
+import android.graphics.PointF
+import android.view.LayoutInflater
+import android.widget.FrameLayout
 import com.example.ageapp.*
 import com.example.ageapp.util.ImageUtils
 import org.tensorflow.contrib.android.TensorFlowInferenceInterface
@@ -32,12 +35,6 @@ class PhotoActivity : AppCompatActivity(), View.OnClickListener {
 
     private var bitmap: Bitmap? = null
     private var filePath: String? = null
-
-
-    private var imgUri: Uri? = null
-    private var imageFile: File? = null
-    private var imageCropFile: File? = null
-
 
     private val ageModelPath = "file:///android_asset/keras_model_01.pb"
     private val inputName = "input_1"
@@ -54,6 +51,9 @@ class PhotoActivity : AppCompatActivity(), View.OnClickListener {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_photo)
 
+        val childView = LayoutInflater.from(this).inflate(R.layout.layout_imgview_point, null, false) as FrameLayout
+        imageLayout.addView(childView)
+
         analyzeBtn.setOnClickListener(this)
         takePhoto.setOnClickListener(this)
         selectAlbum.setOnClickListener(this)
@@ -66,7 +66,13 @@ class PhotoActivity : AppCompatActivity(), View.OnClickListener {
         when (v?.id) {
             R.id.analyzeBtn -> {
                 if (bitmap != null) {
-                    predict(bitmap!!)
+                    val detectedBitmap = detectFace(bitmap!!)
+                    if (detectedBitmap != null) {
+                        imageLayout.setImgBitmap(detectedBitmap)
+                        predict(detectedBitmap)
+                    } else {
+                        showToast("Error")
+                    }
                 } else {
                     showToast("Please take or choose a photo")
                 }
@@ -107,8 +113,11 @@ class PhotoActivity : AppCompatActivity(), View.OnClickListener {
 
                     val options = BitmapFactory.Options()
                     options.inPreferredConfig = Bitmap.Config.RGB_565
-                    bitmap = rotateImageView(readPictureDegree(filePath!!), BitmapFactory.decodeStream(inStream, null, options))
-                    photoView.setImageBitmap(bitmap)
+                    bitmap = rotateImageView(
+                        readPictureDegree(filePath!!),
+                        BitmapFactory.decodeStream(inStream, null, options)
+                    )
+                    imageLayout.setImgBitmap(bitmap!!)
 
 
                     val permission = ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE)
@@ -132,20 +141,13 @@ class PhotoActivity : AppCompatActivity(), View.OnClickListener {
                             val options = BitmapFactory.Options()
                             options.inPreferredConfig = Bitmap.Config.RGB_565
                             bitmap = BitmapFactory.decodeStream(inStream, null, options)
-                            photoView.setImageBitmap(bitmap)
+                            imageLayout.setImgBitmap(bitmap!!)
                         } catch (e: Exception) {
                             showToast(e.message!!)
                         }
                     }
                 }
             }
-
-//            REQUEST_CODE_CAPTURE_CROP -> {
-//                imageCropFile?.let {
-//                    bitmap = BitmapFactory.decodeFile(it.absolutePath)
-//                    photoView.setImageBitmap(bitmap)
-//                }
-//            }
         }
     }
 
@@ -168,13 +170,13 @@ class PhotoActivity : AppCompatActivity(), View.OnClickListener {
     ) {
         if (requestCode == REQUEST_WRITE_EXTERNAL_STORAGE_PERMISSION) {
             if (grantResults.size != 1 || grantResults[0] != PackageManager.PERMISSION_GRANTED) {
-                ErrorDialog.newInstance(getString(R.string.request_permission)).show(supportFragmentManager, "dialog")
+                ErrorDialog.newInstance(getString(R.string.request_permission))
+                    .show(supportFragmentManager, "dialog")
             }
         } else {
             super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         }
     }
-
 
     private fun readPictureDegree(path: String): Int {
         var degree = 0
@@ -213,58 +215,6 @@ class PhotoActivity : AppCompatActivity(), View.OnClickListener {
     }
 
 
-//    private fun gotoCaptureCrop() {
-//        imageFile = FileUtil.createImageFile()
-//
-//        imageFile?.let {
-//            val intent = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
-//
-//            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-//                intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-//                imgUri = FileProvider.getUriForFile(this, AUTHORITY, it)
-//                intent.putExtra(MediaStore.EXTRA_OUTPUT, imgUri)
-//            } else {
-//                intent.putExtra(MediaStore.EXTRA_OUTPUT, Uri.fromFile(it))
-//            }
-//
-//            intent.putExtra("outputFormat", Bitmap.CompressFormat.JPEG.toString())
-//            intent.resolveActivity(packageManager)?.let {
-//                startActivityForResult(intent, TAKE_PHOTO_REQUEST)
-//            }
-//        }
-//    }
-
-
-//    private fun gotoCrop(sourceUri: Uri) {
-//        imageCropFile = FileUtil.createImageFile(true) //创建一个保存裁剪后照片的File
-//        imageCropFile?.let {
-//            val intent = Intent("com.android.camera.action.CROP")
-//            intent.putExtra("crop", "true")
-//            intent.putExtra("aspectX", 1)    //X方向上的比例
-//            intent.putExtra("aspectY", 1)    //Y方向上的比例
-//            intent.putExtra("outputX", 500)  //裁剪区的宽
-//            intent.putExtra("outputY", 500) //裁剪区的高
-//            intent.putExtra("scale ", true)  //是否保留比例
-//            intent.putExtra("return-data", false) //是否在Intent中返回图片
-//            intent.putExtra("outputFormat", Bitmap.CompressFormat.JPEG.toString()) //设置输出图片的格式
-//
-//            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-//                intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION) //添加这一句表示对目标应用临时授权该Uri所代表的文件
-//                intent.setDataAndType(sourceUri, "image/*")  //设置数据源,必须是由FileProvider创建的ContentUri
-//
-//                val imgCropUri = Uri.fromFile(it)
-//                intent.putExtra(MediaStore.EXTRA_OUTPUT, imgCropUri) //设置输出  不需要ContentUri,否则失败
-//                Log.d("tag", "input $sourceUri")
-//                Log.d("tag", "output ${Uri.fromFile(it)}")
-//            } else {
-//                intent.setDataAndType(Uri.fromFile(imageFile!!), "image/*")
-//                intent.putExtra(MediaStore.EXTRA_OUTPUT, Uri.fromFile(it))
-//            }
-//            startActivityForResult(intent, REQUEST_CODE_CAPTURE_CROP)
-//        }
-//    }
-
-
     fun argmax(array: FloatArray): Array<Any> {
         var best = -1
         var bestConfidence = 0.0f
@@ -280,9 +230,24 @@ class PhotoActivity : AppCompatActivity(), View.OnClickListener {
         return arrayOf(best, bestConfidence)
     }
 
+    private fun detectFace(bitmap: Bitmap): Bitmap? {
+        val pair = imageLayout.detectFace() ?: return null
+        val pointF: PointF = pair.first
+        val mEyesDistance: Float = pair.second
+        val scale = 1.2
+        val newBitmap: Bitmap = Bitmap.createBitmap(
+            bitmap,
+            (pointF.x - mEyesDistance * scale).toInt(),
+            (pointF.y - mEyesDistance * scale * 0.8).toInt(),
+            (2 * mEyesDistance * scale).toInt(),
+            (2 * mEyesDistance * scale).toInt()
+        )
+        return newBitmap
+    }
+
 
     private fun predict(bitmap: Bitmap) {
-        //Resize  the  image  into  224  x  224
+        //Resize  the  image  into  64  x  64
         val resizedImage = ImageUtils.processBitmap(bitmap, 64)
 
         //Normalize  the  pixels
@@ -307,18 +272,13 @@ class PhotoActivity : AppCompatActivity(), View.OnClickListener {
         val haha = argmax(genderPredictionList)
         val gender = haha[0] as Int
 
-//        try {
 
         val conf = (confidence * 100).toString().substring(0, 5)
         //Convert  predicted  class  index  into  actual  label  name
+
+        imageLayout.addAgeInfo(age.toString())
+
         showToast(age.toString().plus(" ").plus(conf).plus(" ").plus(gender))
-        photoView.showAge()
-
-//        } catch (e: Exception) {
-//        }
-
 
     }
-
-
 }
