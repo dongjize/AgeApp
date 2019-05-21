@@ -4,8 +4,15 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <com.example.ageapp.view.ImageLayout
-        android:id="@+id/imageLayout"
+    <!--<com.example.ageapp.view.ImageLayout-->
+    <!--android:id="@+id/imageLayout"-->
+    <!--android:layout_width="match_parent"-->
+    <!--android:layout_height="match_parent"-->
+    <!--android:layout_gravity="center"-->
+    <!--android:layout_marginBottom="96dp" />-->
+
+    <com.example.ageapp.view.MyImageView
+        android:id="@+id/myImageView"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_gravity="center"

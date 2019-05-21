@@ -23,8 +23,7 @@ import java.io.FileInputStream
 import android.media.ExifInterface
 import android.graphics.Matrix
 import android.graphics.PointF
-import android.view.LayoutInflater
-import android.widget.FrameLayout
+import android.util.Log
 import com.example.ageapp.*
 import com.example.ageapp.util.ImageUtils
 import org.tensorflow.contrib.android.TensorFlowInferenceInterface
@@ -51,8 +50,8 @@ class PhotoActivity : AppCompatActivity(), View.OnClickListener {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_photo)
 
-        val childView = LayoutInflater.from(this).inflate(R.layout.layout_imgview_point, null, false) as FrameLayout
-        imageLayout.addView(childView)
+//        val childView = LayoutInflater.from(this).inflate(R.layout.layout_imgview_point, null, false) as FrameLayout
+//        myImageView.addView(childView)
 
         analyzeBtn.setOnClickListener(this)
         takePhoto.setOnClickListener(this)
@@ -66,10 +65,10 @@ class PhotoActivity : AppCompatActivity(), View.OnClickListener {
         when (v?.id) {
             R.id.analyzeBtn -> {
                 if (bitmap != null) {
-                    val detectedBitmap = detectFace(bitmap!!)
-                    if (detectedBitmap != null) {
-                        imageLayout.setImgBitmap(detectedBitmap)
-                        predict(detectedBitmap)
+                    val detectedBitmaps = detectFace(bitmap!!)
+                    if (detectedBitmaps != null) {
+//                        myImageView.addPoints()
+                        predict(detectedBitmaps)
                     } else {
                         showToast("Error")
                     }
@@ -113,11 +112,12 @@ class PhotoActivity : AppCompatActivity(), View.OnClickListener {
 
                     val options = BitmapFactory.Options()
                     options.inPreferredConfig = Bitmap.Config.RGB_565
+                    options.inMutable = false
                     bitmap = rotateImageView(
                         readPictureDegree(filePath!!),
                         BitmapFactory.decodeStream(inStream, null, options)
                     )
-                    imageLayout.setImgBitmap(bitmap!!)
+                    myImageView.setImgBitmap(bitmap!!)
 
 
                     val permission = ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE)
@@ -140,8 +140,9 @@ class PhotoActivity : AppCompatActivity(), View.OnClickListener {
                             inStream = contentResolver.openInputStream(uri)
                             val options = BitmapFactory.Options()
                             options.inPreferredConfig = Bitmap.Config.RGB_565
+                            options.inMutable = false
                             bitmap = BitmapFactory.decodeStream(inStream, null, options)
-                            imageLayout.setImgBitmap(bitmap!!)
+                            myImageView.setImgBitmap(bitmap!!)
                         } catch (e: Exception) {
                             showToast(e.message!!)
                         }
@@ -230,55 +231,73 @@ class PhotoActivity : AppCompatActivity(), View.OnClickListener {
         return arrayOf(best, bestConfidence)
     }
 
-    private fun detectFace(bitmap: Bitmap): Bitmap? {
-        val pair = imageLayout.detectFace() ?: return null
-        val pointF: PointF = pair.first
-        val mEyesDistance: Float = pair.second
+    private fun detectFace(bitmap: Bitmap): ArrayList<Bitmap?>? {
+        val pair = myImageView.detectFace() ?: return null
+        val pointFList: Array<PointF?> = pair.first
+        val eyesDistances: Array<Float?> = pair.second
         val scale = 1.2
-        val newBitmap: Bitmap = Bitmap.createBitmap(
-            bitmap,
-            (pointF.x - mEyesDistance * scale).toInt(),
-            (pointF.y - mEyesDistance * scale * 0.8).toInt(),
-            (2 * mEyesDistance * scale).toInt(),
-            (2 * mEyesDistance * scale).toInt()
-        )
-        return newBitmap
+        val newBitmaps: ArrayList<Bitmap?> = ArrayList()
+        for (i in pointFList.indices) {
+            if (pointFList[i] != null && eyesDistances[i] != null) {
+                val pointF = pointFList[i]
+                val eyesDistance = eyesDistances[i]
+
+                val newBitmap: Bitmap = Bitmap.createBitmap(
+                    bitmap,
+                    (pointF!!.x - eyesDistance!! * scale).toInt(),
+                    (pointF.y - eyesDistance * scale * 0.8).toInt(),
+                    (2 * eyesDistance * scale).toInt(),
+                    (2 * eyesDistance * scale).toInt()
+                )
+                newBitmaps.add(newBitmap)
+            }
+
+        }
+
+        return newBitmaps
     }
 
+    private var ageList: ArrayList<String> = ArrayList()
 
-    private fun predict(bitmap: Bitmap) {
-        //Resize  the  image  into  64  x  64
-        val resizedImage = ImageUtils.processBitmap(bitmap, 64)
+    private fun predict(bitmaps: ArrayList<Bitmap?>?) {
+        if (bitmaps != null) {
+            for (i in bitmaps.indices) {
+                //Resize  the  image  into  64  x  64
+                val resizedImage = ImageUtils.processBitmap(bitmaps[i], 64)
 
-        //Normalize  the  pixels
-        floatValues = ImageUtils.normalizeBitmap(resizedImage, 64, 127.5f, 1.0f)
+                //Normalize  the  pixels
+                floatValues = ImageUtils.normalizeBitmap(resizedImage, 64, 127.5f, 1.0f)
 
-        assert(tf != null)
-        //Pass  input  into  the  tensorflow
-        tf!!.feed(inputName, floatValues, 1, 64, 64, 3)
+                assert(tf != null)
+                //Pass  input  into  the  tensorflow
+                tf!!.feed(inputName, floatValues, 1, 64, 64, 3)
 
-        //compute  agePredictionList
-        tf!!.run(arrayOf(outputName1, outputName2))
+                //compute  agePredictionList
+                tf!!.run(arrayOf(outputName1, outputName2))
 
-        //copy  the  output  into  the  agePredictionList  array
-        tf!!.fetch(outputName1, genderPredictionList)
-        tf!!.fetch(outputName2, agePredictionList)
+                //copy  the  output  into  the  agePredictionList  array
+                tf!!.fetch(outputName1, genderPredictionList)
+                tf!!.fetch(outputName2, agePredictionList)
 
-        //Obtained  highest  prediction
-        val results = argmax(agePredictionList)
-        val age = results[0] as Int
-        val confidence = results[1] as Float
+                //Obtained  highest  prediction
+                val results = argmax(agePredictionList)
+                val age = results[0] as Int
+                val confidence = results[1] as Float
 
-        val haha = argmax(genderPredictionList)
-        val gender = haha[0] as Int
+                val haha = argmax(genderPredictionList)
+                val gender = haha[0] as Int
 
 
-        val conf = (confidence * 100).toString().substring(0, 5)
-        //Convert  predicted  class  index  into  actual  label  name
+                val conf = (confidence * 100).toString().substring(0, 5)
+                //Convert  predicted  class  index  into  actual  label  name
 
-        imageLayout.addAgeInfo(age.toString())
+                Log.e("RESULT ".plus(i), age.toString())
+                ageList.add(age.toString())
+                showToast(age.toString().plus(" ").plus(conf).plus(" ").plus(gender))
+            }
+            myImageView.setDrawText(ageList)
 
-        showToast(age.toString().plus(" ").plus(conf).plus(" ").plus(gender))
+        }
 
     }
 }

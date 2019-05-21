@@ -72,10 +72,10 @@ object ImageUtils {
     }
 
 
-    fun processBitmap(source: Bitmap, size: Int): Bitmap {
+    fun processBitmap(source: Bitmap?, size: Int): Bitmap {
 
-        val image_height = source.height
-        val image_width = source.width
+        val image_height = source!!.height
+        val image_width = source!!.width
 
         val croppedBitmap = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888)
 
@@ -84,7 +84,7 @@ object ImageUtils {
         frameToCropTransformations.invert(cropToFrameTransformations)
 
         val canvas = Canvas(croppedBitmap)
-        canvas.drawBitmap(source, frameToCropTransformations, null)
+        canvas.drawBitmap(source!!, frameToCropTransformations, null)
 
         return croppedBitmap
 
