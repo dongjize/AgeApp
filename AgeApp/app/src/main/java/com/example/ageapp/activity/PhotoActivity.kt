@@ -35,10 +35,10 @@ class PhotoActivity : AppCompatActivity(), View.OnClickListener {
     private var bitmap: Bitmap? = null
     private var filePath: String? = null
 
-    private val ageModelPath = "file:///android_asset/keras_model_01.pb"
+    private val ageModelPath = "file:///android_asset/keras_model_02.pb"
     private val inputName = "input_1"
     private val outputName1 = "output_1"
-    private val outputName2 = "output_2"
+//    private val outputName2 = "output_2"
     private var tf: TensorFlowInferenceInterface? = null
 
     private var floatValues: FloatArray? = null
@@ -49,9 +49,6 @@ class PhotoActivity : AppCompatActivity(), View.OnClickListener {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_photo)
-
-//        val childView = LayoutInflater.from(this).inflate(R.layout.layout_imgview_point, null, false) as FrameLayout
-//        myImageView.addView(childView)
 
         analyzeBtn.setOnClickListener(this)
         takePhoto.setOnClickListener(this)
@@ -67,7 +64,6 @@ class PhotoActivity : AppCompatActivity(), View.OnClickListener {
                 if (bitmap != null) {
                     val detectedBitmaps = detectFace(bitmap!!)
                     if (detectedBitmaps != null) {
-//                        myImageView.addPoints()
                         predict(detectedBitmaps)
                     } else {
                         showToast("Error")
@@ -273,19 +269,19 @@ class PhotoActivity : AppCompatActivity(), View.OnClickListener {
                 tf!!.feed(inputName, floatValues, 1, 64, 64, 3)
 
                 //compute  agePredictionList
-                tf!!.run(arrayOf(outputName1, outputName2))
+                tf!!.run(arrayOf(outputName1))
 
                 //copy  the  output  into  the  agePredictionList  array
-                tf!!.fetch(outputName1, genderPredictionList)
-                tf!!.fetch(outputName2, agePredictionList)
+//                tf!!.fetch(outputName1, genderPredictionList)
+                tf!!.fetch(outputName1, agePredictionList)
 
                 //Obtained  highest  prediction
                 val results = argmax(agePredictionList)
                 val age = results[0] as Int
                 val confidence = results[1] as Float
 
-                val haha = argmax(genderPredictionList)
-                val gender = haha[0] as Int
+//                val haha = argmax(genderPredictionList)
+//                val gender = haha[0] as Int
 
 
                 val conf = (confidence * 100).toString().substring(0, 5)
@@ -293,7 +289,7 @@ class PhotoActivity : AppCompatActivity(), View.OnClickListener {
 
                 Log.e("RESULT ".plus(i), age.toString())
                 ageList.add(age.toString())
-                showToast(age.toString().plus(" ").plus(conf).plus(" ").plus(gender))
+//                showToast(age.toString().plus(" ").plus(conf).plus(" ").plus(gender))
             }
             myImageView.setDrawText(ageList)
 
