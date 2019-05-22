@@ -37,13 +37,11 @@ class PhotoActivity : AppCompatActivity(), View.OnClickListener {
 
     private val ageModelPath = "file:///android_asset/keras_model_02.pb"
     private val inputName = "input_1"
-    private val outputName1 = "output_1"
-//    private val outputName2 = "output_2"
+    private val outputName = "output_1"
     private var tf: TensorFlowInferenceInterface? = null
 
     private var floatValues: FloatArray? = null
     private var agePredictionList = FloatArray(1000)
-    private var genderPredictionList = FloatArray(1000)
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -253,9 +251,8 @@ class PhotoActivity : AppCompatActivity(), View.OnClickListener {
         return newBitmaps
     }
 
-    private var ageList: ArrayList<String> = ArrayList()
-
     private fun predict(bitmaps: ArrayList<Bitmap?>?) {
+        val ageList: ArrayList<String> = ArrayList()
         if (bitmaps != null) {
             for (i in bitmaps.indices) {
                 //Resize  the  image  into  64  x  64
@@ -269,27 +266,21 @@ class PhotoActivity : AppCompatActivity(), View.OnClickListener {
                 tf!!.feed(inputName, floatValues, 1, 64, 64, 3)
 
                 //compute  agePredictionList
-                tf!!.run(arrayOf(outputName1))
+                tf!!.run(arrayOf(outputName))
 
                 //copy  the  output  into  the  agePredictionList  array
-//                tf!!.fetch(outputName1, genderPredictionList)
-                tf!!.fetch(outputName1, agePredictionList)
+                tf!!.fetch(outputName, agePredictionList)
 
                 //Obtained  highest  prediction
                 val results = argmax(agePredictionList)
                 val age = results[0] as Int
                 val confidence = results[1] as Float
 
-//                val haha = argmax(genderPredictionList)
-//                val gender = haha[0] as Int
-
-
-                val conf = (confidence * 100).toString().substring(0, 5)
-                //Convert  predicted  class  index  into  actual  label  name
-
-                Log.e("RESULT ".plus(i), age.toString())
+                Log.e(
+                    "RESULT".plus(i),
+                    age.toString().plus(" confidence: ").plus((confidence * 100).toString().substring(0, 5))
+                )
                 ageList.add(age.toString())
-//                showToast(age.toString().plus(" ").plus(conf).plus(" ").plus(gender))
             }
             myImageView.setDrawText(ageList)
 

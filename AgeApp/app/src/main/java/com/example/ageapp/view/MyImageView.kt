@@ -22,6 +22,9 @@ class MyImageView : android.support.v7.widget.AppCompatImageView {
 
     private var mContext: Context? = null
 
+    private var textStringList: ArrayList<String> = ArrayList()
+    private var textSize = 40f
+
 
     constructor(context: Context) : super(context) {
         initView(context)
@@ -59,6 +62,7 @@ class MyImageView : android.support.v7.widget.AppCompatImageView {
         if (mBitmap == null) {
             return null
         }
+        textStringList = ArrayList()
 
         mFaces = arrayOfNulls(mMaxNumberOfFace)
         mFaceDetect = FaceDetector(mBitmap!!.width, mBitmap!!.height, mMaxNumberOfFace)
@@ -77,8 +81,7 @@ class MyImageView : android.support.v7.widget.AppCompatImageView {
         return Pair(mPointFList, mEyesDistances)
     }
 
-    private var textStringList: ArrayList<String> = ArrayList()
-    private var textSize = 40f
+
 
     fun setDrawText(ageList: ArrayList<String>) {
         for (i in ageList.indices) {
