@@ -256,14 +256,15 @@ class PhotoActivity : AppCompatActivity(), View.OnClickListener {
         if (bitmaps != null) {
             for (i in bitmaps.indices) {
                 //Resize  the  image  into  64  x  64
-                val resizedImage = ImageUtils.processBitmap(bitmaps[i], 64)
+//                val resizedImage = ImageUtils.processBitmap(bitmaps[i], 64)
 
                 //Normalize  the  pixels
-                floatValues = ImageUtils.normalizeBitmap(resizedImage, 64, 127.5f, 1.0f)
+//                floatValues = ImageUtils.normalizeBitmap(resizedImage, 64, 127.5f, 1.0f)
+                floatValues = ImageUtils.normalizeBitmap(bitmaps[i]!!, bitmaps[i]!!.width, 0f, 1.0f)
 
                 assert(tf != null)
                 //Pass  input  into  the  tensorflow
-                tf!!.feed(inputName, floatValues, 1, 64, 64, 3)
+                tf!!.feed(inputName, floatValues, 1, bitmaps[i]!!.width.toLong(), bitmaps[i]!!.height.toLong(), 3)
 
                 //compute  agePredictionList
                 tf!!.run(arrayOf(outputName))
