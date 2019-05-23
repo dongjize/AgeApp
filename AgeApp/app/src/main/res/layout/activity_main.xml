@@ -8,23 +8,6 @@
     tools:context=".activity.MainActivity">
 
     <RelativeLayout
-        android:id="@+id/realTime"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_margin="16dp"
-        android:layout_weight="1"
-        android:background="@color/colorPrimaryDark">
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_centerInParent="true"
-            android:text="Real Time Recognition"
-            android:textColor="@color/colorSplashBg"
-            android:textSize="20sp" />
-    </RelativeLayout>
-
-    <RelativeLayout
         android:id="@+id/usePhoto"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -37,6 +20,23 @@
             android:layout_height="wrap_content"
             android:layout_centerInParent="true"
             android:text="Recognize from a Photo"
+            android:textColor="@color/colorSplashBg"
+            android:textSize="20sp" />
+    </RelativeLayout>
+
+    <RelativeLayout
+        android:id="@+id/realTime"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_margin="16dp"
+        android:layout_weight="1"
+        android:background="@color/colorPrimaryDark">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerInParent="true"
+            android:text="Real Time Recognition"
             android:textColor="@color/colorSplashBg"
             android:textSize="20sp" />
     </RelativeLayout>

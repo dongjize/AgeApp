@@ -108,9 +108,10 @@ class PhotoActivity : AppCompatActivity(), View.OnClickListener {
                     options.inPreferredConfig = Bitmap.Config.RGB_565
                     options.inMutable = false
                     bitmap = rotateImageView(
-                        readPictureDegree(filePath!!),
+                        ImageUtils.readPictureDegree(filePath!!),
                         BitmapFactory.decodeStream(inStream, null, options)
                     )
+//                    bitmap = BitmapFactory.decodeStream(inStream, null, options)
                     myImageView.setImgBitmap(bitmap!!)
 
 
@@ -173,23 +174,7 @@ class PhotoActivity : AppCompatActivity(), View.OnClickListener {
         }
     }
 
-    private fun readPictureDegree(path: String): Int {
-        var degree = 0
-        try {
-            val exifInterface = ExifInterface(path)
-            val orientation =
-                exifInterface.getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_NORMAL)
-            when (orientation) {
-                ExifInterface.ORIENTATION_ROTATE_90 -> degree = 90
-                ExifInterface.ORIENTATION_ROTATE_180 -> degree = 180
-                ExifInterface.ORIENTATION_ROTATE_270 -> degree = 270
-            }
-        } catch (e: IOException) {
-            e.printStackTrace()
-        }
 
-        return degree
-    }
 
     private fun rotateImageView(angle: Int, bitmap: Bitmap?): Bitmap {
         var returnBm: Bitmap? = null
