@@ -83,9 +83,9 @@ class MyImageView : android.support.v7.widget.AppCompatImageView {
 
 
 
-    fun setDrawText(ageList: ArrayList<String>) {
+    fun setDrawText(ageList: FloatArray) {
         for (i in ageList.indices) {
-            textStringList.add(ageList[i])
+            textStringList.add(ageList[i].toInt().toString())
         }
         invalidate()
     }

@@ -4,6 +4,7 @@ import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Matrix
 import android.media.ExifInterface
+import android.util.Log
 import org.json.JSONObject
 import java.io.IOException
 
@@ -27,6 +28,7 @@ object ImageUtils {
 
         return degree
     }
+
     /**
      * Returns a transformation matrix from one reference frame into another.
      * Handles cropping (if maintaining aspect ratio is desired) and rotation.
@@ -107,7 +109,6 @@ object ImageUtils {
 
         return croppedBitmap
 
-
     }
 
     fun normalizeBitmap(source: Bitmap, size: Int, mean: Float, std: Float): FloatArray {
@@ -125,7 +126,50 @@ object ImageUtils {
         }
 
         return output
+    }
 
+    fun processBitmap2(source: ArrayList<Bitmap>, size: Int): Array<Bitmap?> {
+        var croppedBitmaps: Array<Bitmap?> = arrayOfNulls(source.size)
+
+        for (i in source.indices) {
+            val image_height = source[i].height
+            val image_width = source[i].width
+
+            val croppedBitmap = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888)
+
+            val frameToCropTransformations = getTransformationMatrix(image_width, image_height, size, size, 0, false)
+            val cropToFrameTransformations = Matrix()
+            frameToCropTransformations.invert(cropToFrameTransformations)
+
+            croppedBitmaps[i] = croppedBitmap
+
+            val intValues = IntArray(size * size)
+            croppedBitmap!!.getPixels(intValues, 0, size, 0, 0, size, size)
+            Log.e("cropped", intValues[0].toString())
+
+        }
+
+        return croppedBitmaps
+
+    }
+
+    fun normalizeBitmap2(source: Array<Bitmap?>, size: Int, mean: Float, std: Float): FloatArray {
+
+        val output = FloatArray(source.size * size * size * 3)
+
+        for (i in source.indices) {
+
+            val intValues = IntArray(size * size)
+            source[i]!!.getPixels(intValues, 0, size, 0, 0, size, size)
+            for (j in intValues.indices) {
+                val `val` = intValues[i]
+                output[i * j * 3 + j * 3] = ((`val` shr 16 and 0xFF) - mean) / std
+                output[i * j * 3 + j * 3 + 1] = ((`val` shr 8 and 0xFF) - mean) / std
+                output[i * j * 3 + j * 3 + 2] = ((`val` and 0xFF) - mean) / std
+            }
+        }
+
+        return output
     }
 
     fun argmax(array: FloatArray): Array<Any> {

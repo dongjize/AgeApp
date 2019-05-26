@@ -20,14 +20,14 @@ import com.example.ageapp.dialog.ConfirmationDialog
 import com.example.android.camera2basic.ErrorDialog
 import java.io.File
 import java.io.FileInputStream
-import android.media.ExifInterface
 import android.graphics.Matrix
 import android.graphics.PointF
 import android.util.Log
 import com.example.ageapp.*
 import com.example.ageapp.util.ImageUtils
 import org.tensorflow.contrib.android.TensorFlowInferenceInterface
-import java.io.IOException
+import java.util.*
+import kotlin.collections.ArrayList
 
 
 class PhotoActivity : AppCompatActivity(), View.OnClickListener {
@@ -35,13 +35,13 @@ class PhotoActivity : AppCompatActivity(), View.OnClickListener {
     private var bitmap: Bitmap? = null
     private var filePath: String? = null
 
-    private val ageModelPath = "file:///android_asset/keras_model_02.pb"
+    private val ageModelPath = "file:///android_asset/ssr_model.pb"
+    //    private val ageModelPath = "file:///android_asset/resnet_model.pb"
     private val inputName = "input_1"
     private val outputName = "output_1"
     private var tf: TensorFlowInferenceInterface? = null
 
-    private var floatValues: FloatArray? = null
-    private var agePredictionList = FloatArray(1000)
+    private var inputValues: FloatArray? = null
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -175,14 +175,13 @@ class PhotoActivity : AppCompatActivity(), View.OnClickListener {
     }
 
 
-
     private fun rotateImageView(angle: Int, bitmap: Bitmap?): Bitmap {
         var returnBm: Bitmap? = null
         val matrix = Matrix()
         matrix.postRotate(angle.toFloat())
         try {
             returnBm = Bitmap.createBitmap(bitmap!!, 0, 0, bitmap.width, bitmap.height, matrix, true)
-        } catch (e: OutOfMemoryError) {
+        } catch (e: Exception) {
         }
 
         if (returnBm == null) {
@@ -195,27 +194,12 @@ class PhotoActivity : AppCompatActivity(), View.OnClickListener {
     }
 
 
-    fun argmax(array: FloatArray): Array<Any> {
-        var best = -1
-        var bestConfidence = 0.0f
-
-        for (i in array.indices) {
-            val value = array[i]
-            if (value > bestConfidence) {
-                bestConfidence = value
-                best = i
-            }
-        }
-
-        return arrayOf(best, bestConfidence)
-    }
-
-    private fun detectFace(bitmap: Bitmap): ArrayList<Bitmap?>? {
+    private fun detectFace(bitmap: Bitmap): ArrayList<Bitmap>? {
         val pair = myImageView.detectFace() ?: return null
         val pointFList: Array<PointF?> = pair.first
         val eyesDistances: Array<Float?> = pair.second
         val scale = 1.2
-        val newBitmaps: ArrayList<Bitmap?> = ArrayList()
+        val newBitmaps: ArrayList<Bitmap> = ArrayList()
         for (i in pointFList.indices) {
             if (pointFList[i] != null && eyesDistances[i] != null) {
                 val pointF = pointFList[i]
@@ -236,41 +220,35 @@ class PhotoActivity : AppCompatActivity(), View.OnClickListener {
         return newBitmaps
     }
 
-    private fun predict(bitmaps: ArrayList<Bitmap?>?) {
-        val ageList: ArrayList<String> = ArrayList()
+
+    private fun predict(bitmaps: ArrayList<Bitmap>?) {
+
         if (bitmaps != null) {
-            for (i in bitmaps.indices) {
-                //Resize  the  image  into  64  x  64
-//                val resizedImage = ImageUtils.processBitmap(bitmaps[i], 64)
+            val agePredictionList = FloatArray(bitmaps.size)
+            Log.e("bitmaps size", bitmaps.size.toString())
 
-                //Normalize  the  pixels
-//                floatValues = ImageUtils.normalizeBitmap(resizedImage, 64, 127.5f, 1.0f)
-                floatValues = ImageUtils.normalizeBitmap(bitmaps[i]!!, bitmaps[i]!!.width, 0f, 1.0f)
 
-                assert(tf != null)
-                //Pass  input  into  the  tensorflow
-                tf!!.feed(inputName, floatValues, 1, bitmaps[i]!!.width.toLong(), bitmaps[i]!!.height.toLong(), 3)
+            //Resize  the  image  into  64  x  64
+            val resizedImages = ImageUtils.processBitmap2(bitmaps, 64)
 
-                //compute  agePredictionList
-                tf!!.run(arrayOf(outputName))
+//            val intValues = IntArray(64 * 64)
+//            resizedImages[0]!!.getPixels(intValues, 0, 64, 0, 0, 64, 64)
 
-                //copy  the  output  into  the  agePredictionList  array
-                tf!!.fetch(outputName, agePredictionList)
+            //Normalize  the  pixels
+            inputValues = ImageUtils.normalizeBitmap2(resizedImages, 64, 127.5f, 1.0f)
 
-                //Obtained  highest  prediction
-                val results = argmax(agePredictionList)
-                val age = results[0] as Int
-                val confidence = results[1] as Float
+            assert(tf != null)
+            //Pass  input  into  the  tensorflow
+            tf!!.feed(inputName, inputValues, resizedImages.size.toLong(), 64, 64, 3)
 
-                Log.e(
-                    "RESULT".plus(i),
-                    age.toString().plus(" confidence: ").plus((confidence * 100).toString().substring(0, 5))
-                )
-                ageList.add(age.toString())
-            }
-            myImageView.setDrawText(ageList)
+            //compute  agePredictionList
+            tf!!.run(arrayOf(outputName))
+
+            //copy  the  output  into  the  agePredictionList  array
+            tf!!.fetch(outputName, agePredictionList)
+
+            myImageView.setDrawText(agePredictionList)
 
         }
-
     }
 }
