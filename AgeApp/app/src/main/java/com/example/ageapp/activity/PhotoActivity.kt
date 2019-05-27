@@ -22,6 +22,7 @@ import java.io.File
 import java.io.FileInputStream
 import android.graphics.Matrix
 import android.graphics.PointF
+import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
 import com.example.ageapp.*
@@ -92,7 +93,7 @@ class PhotoActivity : AppCompatActivity(), View.OnClickListener {
                 if (bitmap != null) {
 //                    val detectedBitmaps = detectFace(bitmap!!)
                     val detectedBitmaps = detectFace(bitmap!!)
-                    if (detectedBitmaps != null) {
+                    if (detectedBitmaps != null && detectedBitmaps.size > 0) {
                         predict(detectedBitmaps)
                     } else {
                         showToast("No face detected")
@@ -226,27 +227,16 @@ class PhotoActivity : AppCompatActivity(), View.OnClickListener {
 
 
     private fun detectFace(bitmap: Bitmap): ArrayList<Bitmap>? {
-        val pair = myImageView.detectFace() ?: return null
-        val pointFList: Array<PointF?> = pair.first
-        val eyesDistances: Array<Float?> = pair.second
+        val triple = myImageView.detectFace() ?: return null
+        val pointFList: Array<PointF?> = triple.first
+        val eyesDistances: Array<Float?> = triple.second
+        val confidences: Array<Float?> = triple.third
         val newBitmaps: ArrayList<Bitmap> = ArrayList()
         for (i in pointFList.indices) {
-            if (pointFList[i] != null && eyesDistances[i] != null) {
+            if (pointFList[i] != null && eyesDistances[i] != null && eyesDistances[i]!! > 50 && confidences[i]!! > 0) {
                 val pointF = pointFList[i]!!
                 val eyesDistance = eyesDistances[i]!!
-
-//                val newBitmap: Bitmap = Bitmap.createBitmap(
-//                    bitmap,
-//                    (pointF.x - eyesDistance!! * scale).toInt(),
-//                    (pointF.y - eyesDistance * scale).toInt(),
-//                    (2 * eyesDistance * scale).toInt(),
-//                    (2 * eyesDistance * scale).toInt()
-////                    (pointF!!.x - eyesDistance!! * scale * 0.7).toInt(),
-////                    (pointF.y - eyesDistance * scale * 0.5).toInt(),
-////                    (2 * eyesDistance * scale * 0.8).toInt(),
-////                    (2 * eyesDistance * scale * 0.8).toInt()
-//                )
-                var newBitmap: Bitmap = getCroppedBitmap(bitmap, pointF, eyesDistance)
+                val newBitmap: Bitmap = getCroppedBitmap(bitmap, pointF, eyesDistance)
                 newBitmaps.add(newBitmap)
             }
 

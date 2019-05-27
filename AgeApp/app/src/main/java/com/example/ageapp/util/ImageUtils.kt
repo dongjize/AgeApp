@@ -122,7 +122,6 @@ object ImageUtils {
             output[i * 3 + 1] = ((`val` shr 8 and 0xFF) - mean) / std
             output[i * 3 + 2] = ((`val` and 0xFF) - mean) / std
 
-            Log.e("aaa", "".plus(output[i * 3]).plus(" ").plus(output[i * 3 + 1]).plus(" ").plus(output[i * 3 + 2]))
         }
 
         return output

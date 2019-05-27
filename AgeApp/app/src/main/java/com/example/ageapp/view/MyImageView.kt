@@ -17,6 +17,7 @@ class MyImageView : android.support.v7.widget.AppCompatImageView {
 
     private lateinit var mPointFList: Array<PointF?>
     private lateinit var mEyesDistances: Array<Float?>
+    private lateinit var confidences: Array<Float?>
 
     private var mBitmap: Bitmap? = null
 
@@ -58,7 +59,7 @@ class MyImageView : android.support.v7.widget.AppCompatImageView {
         setImageBitmap(bitmap)
     }
 
-    fun detectFace(): Pair<Array<PointF?>, Array<Float?>>? {
+    fun detectFace(): Triple<Array<PointF?>, Array<Float?>, Array<Float?>>? {
         if (mBitmap == null) {
             return null
         }
@@ -70,16 +71,19 @@ class MyImageView : android.support.v7.widget.AppCompatImageView {
 
         mPointFList = arrayOfNulls(mMaxNumberOfFace)
         mEyesDistances = arrayOfNulls(mMaxNumberOfFace)
+        confidences = arrayOfNulls(mMaxNumberOfFace)
         for (i in 0 until mNumberOfFaceDetected) {
             val face = mFaces[i]
             mPointFList[i] = PointF()
             face!!.getMidPoint(mPointFList[i])
             mEyesDistances[i] = face.eyesDistance()
+            confidences[i] = face.confidence()
+            Log.e("confidence", "".plus(confidences[i]))
+            Log.e("eye distance", "".plus(mEyesDistances[i]))
 
         }
-        return Pair(mPointFList, mEyesDistances)
+        return Triple(mPointFList, mEyesDistances, confidences)
     }
-
 
 
     fun setDrawText(ageList: FloatArray) {
