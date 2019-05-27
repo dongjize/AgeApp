@@ -1,8 +1,6 @@
 package com.example.ageapp.util
 
-import android.graphics.Bitmap
-import android.graphics.Canvas
-import android.graphics.Matrix
+import android.graphics.*
 import android.media.ExifInterface
 import android.util.Log
 import org.json.JSONObject
@@ -22,7 +20,7 @@ object ImageUtils {
                 ExifInterface.ORIENTATION_ROTATE_180 -> degree = 180
                 ExifInterface.ORIENTATION_ROTATE_270 -> degree = 270
             }
-        } catch (e: IOException) {
+        } catch (e: Exception) {
             e.printStackTrace()
         }
 
@@ -123,53 +121,35 @@ object ImageUtils {
             output[i * 3] = ((`val` shr 16 and 0xFF) - mean) / std
             output[i * 3 + 1] = ((`val` shr 8 and 0xFF) - mean) / std
             output[i * 3 + 2] = ((`val` and 0xFF) - mean) / std
+
+            Log.e("aaa", "".plus(output[i * 3]).plus(" ").plus(output[i * 3 + 1]).plus(" ").plus(output[i * 3 + 2]))
         }
 
         return output
     }
 
-    fun processBitmap2(source: ArrayList<Bitmap>, size: Int): Array<Bitmap?> {
-        var croppedBitmaps: Array<Bitmap?> = arrayOfNulls(source.size)
-
-        for (i in source.indices) {
-            val image_height = source[i].height
-            val image_width = source[i].width
-
-            val croppedBitmap = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888)
-
-            val frameToCropTransformations = getTransformationMatrix(image_width, image_height, size, size, 0, false)
-            val cropToFrameTransformations = Matrix()
-            frameToCropTransformations.invert(cropToFrameTransformations)
-
-            croppedBitmaps[i] = croppedBitmap
-
-            val intValues = IntArray(size * size)
-            croppedBitmap!!.getPixels(intValues, 0, size, 0, 0, size, size)
-            Log.e("cropped", intValues[0].toString())
-
-        }
-
-        return croppedBitmaps
-
-    }
-
-    fun normalizeBitmap2(source: Array<Bitmap?>, size: Int, mean: Float, std: Float): FloatArray {
-
-        val output = FloatArray(source.size * size * size * 3)
-
-        for (i in source.indices) {
-
-            val intValues = IntArray(size * size)
-            source[i]!!.getPixels(intValues, 0, size, 0, 0, size, size)
-            for (j in intValues.indices) {
-                val `val` = intValues[i]
-                output[i * j * 3 + j * 3] = ((`val` shr 16 and 0xFF) - mean) / std
-                output[i * j * 3 + j * 3 + 1] = ((`val` shr 8 and 0xFF) - mean) / std
-                output[i * j * 3 + j * 3 + 2] = ((`val` and 0xFF) - mean) / std
-            }
-        }
-
-        return output
+    fun getGrayBitmap(bm: Bitmap): Bitmap {
+        var bitmap: Bitmap? = null
+        //获取图片的宽和高
+        val width = bm.width
+        val height = bm.height
+        //创建灰度图片
+        bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.RGB_565)
+        //创建画布
+        val canvas = Canvas(bitmap!!)
+        //创建画笔
+        val paint = Paint()
+        //创建颜色矩阵
+        val matrix = ColorMatrix()
+        //设置颜色矩阵的饱和度:0代表灰色,1表示原图
+        matrix.setSaturation(0f)
+        //颜色过滤器
+        val cmcf = ColorMatrixColorFilter(matrix)
+        //设置画笔颜色过滤器
+        paint.colorFilter = cmcf
+        //画图
+        canvas.drawBitmap(bm, 0f, 0f, paint)
+        return bitmap
     }
 
     fun argmax(array: FloatArray): Array<Any> {

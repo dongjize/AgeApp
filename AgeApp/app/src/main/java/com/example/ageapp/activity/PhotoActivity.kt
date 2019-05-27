@@ -22,11 +22,11 @@ import java.io.File
 import java.io.FileInputStream
 import android.graphics.Matrix
 import android.graphics.PointF
-import android.util.Log
+import android.view.Menu
+import android.view.MenuItem
 import com.example.ageapp.*
 import com.example.ageapp.util.ImageUtils
 import org.tensorflow.contrib.android.TensorFlowInferenceInterface
-import java.util.*
 import kotlin.collections.ArrayList
 
 
@@ -35,8 +35,7 @@ class PhotoActivity : AppCompatActivity(), View.OnClickListener {
     private var bitmap: Bitmap? = null
     private var filePath: String? = null
 
-    private val ageModelPath = "file:///android_asset/ssr_model.pb"
-    //    private val ageModelPath = "file:///android_asset/resnet_model.pb"
+    private var ageModelPath = "file:///android_asset/ssrnet_wiki_model.pb"
     private val inputName = "input_1"
     private val outputName = "output_1"
     private var tf: TensorFlowInferenceInterface? = null
@@ -56,15 +55,47 @@ class PhotoActivity : AppCompatActivity(), View.OnClickListener {
 
     }
 
+    override fun onCreateOptionsMenu(menu: Menu): Boolean {
+        // Inflate the menu; this adds items to the action bar if it is present.
+        menuInflater.inflate(R.menu.menu_photo_activity, menu)
+        return true
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        return when (item.itemId) {
+            R.id.model1 -> {
+                ageModelPath = "file:///android_asset/ssrnet_wiki_model.pb"
+                tf = TensorFlowInferenceInterface(assets, ageModelPath)
+                showToast("model with wiki")
+                return true
+            }
+            R.id.model2 -> {
+                ageModelPath = "file:///android_asset/ssrnet_imdb_model.pb"
+                tf = TensorFlowInferenceInterface(assets, ageModelPath)
+                showToast("model with imdb")
+                return true
+            }
+            R.id.model3 -> {
+                ageModelPath = "file:///android_asset/ssrnet_morph2_model.pb"
+                tf = TensorFlowInferenceInterface(assets, ageModelPath)
+                showToast("model with morph2")
+                return true
+            }
+            else -> super.onOptionsItemSelected(item)
+        }
+    }
+
+
     override fun onClick(v: View?) {
         when (v?.id) {
             R.id.analyzeBtn -> {
                 if (bitmap != null) {
+//                    val detectedBitmaps = detectFace(bitmap!!)
                     val detectedBitmaps = detectFace(bitmap!!)
                     if (detectedBitmaps != null) {
                         predict(detectedBitmaps)
                     } else {
-                        showToast("Error")
+                        showToast("No face detected")
                     }
                 } else {
                     showToast("Please take or choose a photo")
@@ -198,54 +229,84 @@ class PhotoActivity : AppCompatActivity(), View.OnClickListener {
         val pair = myImageView.detectFace() ?: return null
         val pointFList: Array<PointF?> = pair.first
         val eyesDistances: Array<Float?> = pair.second
-        val scale = 1.2
         val newBitmaps: ArrayList<Bitmap> = ArrayList()
         for (i in pointFList.indices) {
             if (pointFList[i] != null && eyesDistances[i] != null) {
-                val pointF = pointFList[i]
-                val eyesDistance = eyesDistances[i]
+                val pointF = pointFList[i]!!
+                val eyesDistance = eyesDistances[i]!!
 
-                val newBitmap: Bitmap = Bitmap.createBitmap(
-                    bitmap,
-                    (pointF!!.x - eyesDistance!! * scale).toInt(),
-                    (pointF.y - eyesDistance * scale * 0.8).toInt(),
-                    (2 * eyesDistance * scale).toInt(),
-                    (2 * eyesDistance * scale).toInt()
-                )
+//                val newBitmap: Bitmap = Bitmap.createBitmap(
+//                    bitmap,
+//                    (pointF.x - eyesDistance!! * scale).toInt(),
+//                    (pointF.y - eyesDistance * scale).toInt(),
+//                    (2 * eyesDistance * scale).toInt(),
+//                    (2 * eyesDistance * scale).toInt()
+////                    (pointF!!.x - eyesDistance!! * scale * 0.7).toInt(),
+////                    (pointF.y - eyesDistance * scale * 0.5).toInt(),
+////                    (2 * eyesDistance * scale * 0.8).toInt(),
+////                    (2 * eyesDistance * scale * 0.8).toInt()
+//                )
+                var newBitmap: Bitmap = getCroppedBitmap(bitmap, pointF, eyesDistance)
                 newBitmaps.add(newBitmap)
             }
 
         }
 
+//        myImageView.setImgBitmap(newBitmaps[1])
+
         return newBitmaps
+    }
+
+    private fun getCroppedBitmap(bitmap: Bitmap, pointF: PointF, eyesDistance: Float): Bitmap {
+        val scale = 1.8
+        var x = 0
+        var y = 0
+        val size: Int
+        if (pointF.x - eyesDistance * scale > 0) {
+            x = (pointF.x - eyesDistance * scale).toInt()
+        }
+        if (pointF.y - eyesDistance * scale > 0) {
+            y = (pointF.y - eyesDistance * scale).toInt()
+        }
+        if (x + 2 * eyesDistance * scale < bitmap.width && y + 2 * eyesDistance * scale < bitmap.height) {
+            size = (2 * eyesDistance * scale).toInt()
+        } else if (x > y) {
+            size = bitmap.width - x
+        } else {
+            size = bitmap.height - y
+        }
+
+        return Bitmap.createBitmap(bitmap, x, y, size, size)
+
     }
 
 
     private fun predict(bitmaps: ArrayList<Bitmap>?) {
 
         if (bitmaps != null) {
+
+            val imgSize = 64
             val agePredictionList = FloatArray(bitmaps.size)
-            Log.e("bitmaps size", bitmaps.size.toString())
 
+            for (i in bitmaps.indices) {
 
-            //Resize  the  image  into  64  x  64
-            val resizedImages = ImageUtils.processBitmap2(bitmaps, 64)
+                val ages = FloatArray(1)
+                val resizedImage = ImageUtils.processBitmap(bitmaps[i], imgSize)
+                inputValues = ImageUtils.normalizeBitmap(resizedImage, imgSize, 0f, 1.0f)
+//                inputValues = ImageUtils.normalizeBitmap(resizedImage, imgSize, 127.5f, 1.0f)
 
-//            val intValues = IntArray(64 * 64)
-//            resizedImages[0]!!.getPixels(intValues, 0, 64, 0, 0, 64, 64)
+                //Pass  input  into  the  tensorflow
+                tf!!.feed(inputName, inputValues, 1, imgSize.toLong(), imgSize.toLong(), 3)
 
-            //Normalize  the  pixels
-            inputValues = ImageUtils.normalizeBitmap2(resizedImages, 64, 127.5f, 1.0f)
+                //compute  agePredictionList
+                tf!!.run(arrayOf(outputName))
 
-            assert(tf != null)
-            //Pass  input  into  the  tensorflow
-            tf!!.feed(inputName, inputValues, resizedImages.size.toLong(), 64, 64, 3)
+                //copy  the  output  into  the  agePredictionList  array
+                tf!!.fetch(outputName, ages)
 
-            //compute  agePredictionList
-            tf!!.run(arrayOf(outputName))
+                agePredictionList[i] = ages[0]
 
-            //copy  the  output  into  the  agePredictionList  array
-            tf!!.fetch(outputName, agePredictionList)
+            }
 
             myImageView.setDrawText(agePredictionList)
 

@@ -67,7 +67,6 @@ class MyImageView : android.support.v7.widget.AppCompatImageView {
         mFaces = arrayOfNulls(mMaxNumberOfFace)
         mFaceDetect = FaceDetector(mBitmap!!.width, mBitmap!!.height, mMaxNumberOfFace)
         mNumberOfFaceDetected = mFaceDetect!!.findFaces(mBitmap, mFaces)
-        Log.e("jupiter", "mNumberOfFaceDetected is $mNumberOfFaceDetected")
 
         mPointFList = arrayOfNulls(mMaxNumberOfFace)
         mEyesDistances = arrayOfNulls(mMaxNumberOfFace)

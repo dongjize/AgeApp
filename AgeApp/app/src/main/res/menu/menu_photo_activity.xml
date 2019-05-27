@@ -1,0 +1,23 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:context="com.example.myapplication.MainActivity">
+    <item
+        android:id="@+id/models"
+        android:orderInCategory="100"
+        android:title="Choose Model"
+        app:showAsAction="never">
+        <menu>
+            <item
+                android:id="@+id/model1"
+                android:title="wiki" />
+            <item
+                android:id="@+id/model2"
+                android:title="imdb" />
+            <item
+                android:id="@+id/model3"
+                android:title="morph2" />
+        </menu>
+
+    </item>
+</menu>
