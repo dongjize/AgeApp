@@ -61,8 +61,8 @@ def squeezenet_fire_module_fuck(input, input_channel_small=16, input_channel_lar
 
 
 # weight_file = "../pre-trained/morph2/ssrnet_3_3_3_64_1.0_1.0/ssrnet_3_3_3_64_1.0_1.0.h5"
-# weight_file = "../pre-trained/wiki/ssrnet_3_3_3_64_1.0_1.0/ssrnet_3_3_3_64_1.0_1.0.h5"
-weight_file = "../pre-trained/imdb/ssrnet_3_3_3_64_1.0_1.0/ssrnet_3_3_3_64_1.0_1.0.h5"
+weight_file = "../pre-trained/wiki/ssrnet_3_3_3_64_1.0_1.0/ssrnet_3_3_3_64_1.0_1.0.h5"
+# weight_file = "../pre-trained/imdb/ssrnet_3_3_3_64_1.0_1.0/ssrnet_3_3_3_64_1.0_1.0.h5"
 img_size = 64
 stage_num = [3, 3, 3]
 lambda_local = 1
@@ -71,6 +71,5 @@ model = SSR_net(img_size, stage_num, lambda_local, lambda_d)()
 model.load_weights(weight_file)
 
 output_dir = os.path.join(os.getcwd(), "out")
-print(output_dir)
 keras_to_tensorflow(model, output_dir=output_dir, model_name="ssr_model.pb")
 print("MODEL SAVED")
