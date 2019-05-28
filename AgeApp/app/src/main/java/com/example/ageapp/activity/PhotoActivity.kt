@@ -91,7 +91,6 @@ class PhotoActivity : AppCompatActivity(), View.OnClickListener {
         when (v?.id) {
             R.id.analyzeBtn -> {
                 if (bitmap != null) {
-//                    val detectedBitmaps = detectFace(bitmap!!)
                     val detectedBitmaps = detectFace(bitmap!!)
                     if (detectedBitmaps != null && detectedBitmaps.size > 0) {
                         predict(detectedBitmaps)
@@ -143,7 +142,6 @@ class PhotoActivity : AppCompatActivity(), View.OnClickListener {
                         ImageUtils.readPictureDegree(filePath!!),
                         BitmapFactory.decodeStream(inStream, null, options)
                     )
-//                    bitmap = BitmapFactory.decodeStream(inStream, null, options)
                     myImageView.setImgBitmap(bitmap!!)
 
 

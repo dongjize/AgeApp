@@ -28,37 +28,6 @@ def keras_to_tensorflow(keras_model, output_dir, model_name, out_prefix="output_
 
         import_pb_to_tensorboard.import_to_tensorboard(os.path.join(output_dir, model_name), output_dir)
 
-    """
-We explicitly redefine the Squeezent architecture since Keras has no predefined Squeezenet
-"""
-
-
-def squeezenet_fire_module(input, input_channel_small=16, input_channel_large=64):
-    channel_axis = 3
-
-    input = Conv2D(input_channel_small, (1, 1), padding="valid")(input)
-    input = Activation("relu")(input)
-
-    input_branch_1 = Conv2D(input_channel_large, (1, 1), padding="valid")(input)
-    input_branch_1 = Activation("relu")(input_branch_1)
-
-    input_branch_2 = Conv2D(input_channel_large, (3, 3), padding="same")(input)
-    input_branch_2 = Activation("relu")(input_branch_2)
-
-    input = concatenate([input_branch_1, input_branch_2], axis=channel_axis)
-
-    return input
-
-
-def squeezenet_fire_module_fuck(input, input_channel_small=16, input_channel_large=64):
-    input = Conv2D(input_channel_small, (1, 1), padding="valid")(input)
-    input = Activation("relu")(input)
-
-    input = Conv2D(input_channel_large, (1, 1), padding="valid")(input)
-    input = Activation("relu")(input)
-
-    return input
-
 
 # weight_file = "../pre-trained/morph2/ssrnet_3_3_3_64_1.0_1.0/ssrnet_3_3_3_64_1.0_1.0.h5"
 weight_file = "../pre-trained/wiki/ssrnet_3_3_3_64_1.0_1.0/ssrnet_3_3_3_64_1.0_1.0.h5"
