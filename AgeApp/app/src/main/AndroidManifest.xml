@@ -30,7 +30,6 @@
             </intent-filter>
         </activity>
         <activity android:name=".activity.RealTimeActivity" />
-        <activity android:name=".activity.ResultActivity" />
         <activity android:name=".activity.PhotoActivity" />
 
 
