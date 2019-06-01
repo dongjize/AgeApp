@@ -14,6 +14,7 @@ class MyImageView : android.support.v7.widget.AppCompatImageView {
     private lateinit var mFaces: Array<FaceDetector.Face?>
     private var mPaint: Paint? = null
     private val paint = Paint()
+    private val paint2 = Paint()
 
     private lateinit var mPointFList: Array<PointF?>
     private lateinit var mEyesDistances: Array<Float?>
@@ -47,10 +48,15 @@ class MyImageView : android.support.v7.widget.AppCompatImageView {
         mPaint!!.style = Paint.Style.STROKE
         mPaint!!.strokeWidth = 8f
 
-        paint.color = Color.RED
+        // text
+        paint.color = Color.WHITE
         paint.strokeWidth = 8f
         paint.style = Paint.Style.FILL
         paint.textSize = textSize
+
+        // small rect
+        paint2.color = Color.RED
+        paint2.style = Paint.Style.FILL
 
     }
 
@@ -115,10 +121,17 @@ class MyImageView : android.support.v7.widget.AppCompatImageView {
 
             if (textStringList.size > 0) {
                 for (i in textStringList.indices) {
+                    canvas.drawRect(
+                        marginW + (mPointFList[i]!!.x + mEyesDistances[i]!! * 1.2f) * ratio - 60,
+                        marginH + (mPointFList[i]!!.y - mEyesDistances[i]!! * 1.2f) * ratio,
+                        marginW + (mPointFList[i]!!.x + mEyesDistances[i]!! * 1.2f) * ratio,
+                        marginH + (mPointFList[i]!!.y - mEyesDistances[i]!! * 1.2f) * ratio + 60,
+                        paint2
+                    )
                     canvas.drawText(
                         textStringList[i],
-                        marginW + (mPointFList[i]!!.x + mEyesDistances[i]!! * 1.2f) * ratio,
-                        marginH + (mPointFList[i]!!.y - mEyesDistances[i]!! * 1.2f) * ratio,
+                        marginW + (mPointFList[i]!!.x + mEyesDistances[i]!! * 1.2f) * ratio - 50,
+                        marginH + (mPointFList[i]!!.y - mEyesDistances[i]!! * 1.2f) * ratio + 50,
                         paint
                     )
                     canvas.drawRect(

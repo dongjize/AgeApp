@@ -231,7 +231,7 @@ class PhotoActivity : AppCompatActivity(), View.OnClickListener {
         val confidences: Array<Float?> = triple.third
         val newBitmaps: ArrayList<Bitmap> = ArrayList()
         for (i in pointFList.indices) {
-            if (pointFList[i] != null && eyesDistances[i] != null && eyesDistances[i]!! > 50 && confidences[i]!! > 0) {
+            if (pointFList[i] != null && eyesDistances[i] != null && eyesDistances[i]!! > bitmap.width / 1000 && confidences[i]!! > 0) {
                 val pointF = pointFList[i]!!
                 val eyesDistance = eyesDistances[i]!!
                 val newBitmap: Bitmap = getCroppedBitmap(bitmap, pointF, eyesDistance)
@@ -281,7 +281,6 @@ class PhotoActivity : AppCompatActivity(), View.OnClickListener {
                 val ages = FloatArray(1)
                 val resizedImage = ImageUtils.processBitmap(bitmaps[i], imgSize)
                 inputValues = ImageUtils.normalizeBitmap(resizedImage, imgSize, 0f, 1.0f)
-//                inputValues = ImageUtils.normalizeBitmap(resizedImage, imgSize, 127.5f, 1.0f)
 
                 //Pass  input  into  the  tensorflow
                 tf!!.feed(inputName, inputValues, 1, imgSize.toLong(), imgSize.toLong(), 3)
