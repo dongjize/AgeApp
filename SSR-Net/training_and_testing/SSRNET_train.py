@@ -17,9 +17,8 @@ from TYY_generators import *
 from keras.utils import plot_model
 from moviepy.editor import *
 import cv2
+
 logging.basicConfig(level=logging.DEBUG)
-
-
 
 
 def get_args():
@@ -44,7 +43,6 @@ def get_args():
     return args
 
 
-
 def main():
     args = get_args()
     input_path = args.input
@@ -57,56 +55,53 @@ def main():
 
     logging.debug("Loading data...")
     image, gender, age, image_size = load_data_npz(input_path)
-    
+
     x_data = image
     y_data_a = age
 
-    start_decay_epoch = [30,60]
+    start_decay_epoch = [30, 60]
 
     optMethod = Adam()
 
-    stage_num = [3,3,3]
-    lambda_local = 0.25*(netType1%5)
-    lambda_d = 0.25*(netType2%5)
+    stage_num = [3, 3, 3]
+    lambda_local = 0.25 * (netType1 % 5)
+    lambda_d = 0.25 * (netType2 % 5)
 
-    model = SSR_net(image_size,stage_num, lambda_local, lambda_d)()
-    save_name = 'ssrnet_%d_%d_%d_%d_%s_%s' % (stage_num[0],stage_num[1],stage_num[2], image_size, lambda_local, lambda_d)
-    model.compile(optimizer=optMethod, loss=["mae"], metrics={'pred_a':'mae'})
+    model = SSR_net(image_size, stage_num, lambda_local, lambda_d)()
+    save_name = 'ssrnet_%d_%d_%d_%d_%s_%s' % (
+    stage_num[0], stage_num[1], stage_num[2], image_size, lambda_local, lambda_d)
+    model.compile(optimizer=optMethod, loss=["mae"], metrics={'pred_a': 'mae'})
 
     if db_name == "wiki":
-        weight_file = "imdb_models/"+save_name+"/"+save_name+".h5"
+        weight_file = "imdb_models/" + save_name + "/" + save_name + ".h5"
         model.load_weights(weight_file)
-    elif db_name == "morph": 
-        weight_file = "wiki_models/"+save_name+"/"+save_name+".h5"
-        model.load_weights(weight_file) 
+    elif db_name == "morph":
+        weight_file = "wiki_models/" + save_name + "/" + save_name + ".h5"
+        model.load_weights(weight_file)
 
-    
     logging.debug("Model summary...")
     model.count_params()
     model.summary()
 
     logging.debug("Saving model...")
-    mk_dir(db_name+"_models")
-    mk_dir(db_name+"_models/"+save_name)
-    mk_dir(db_name+"_checkpoints")
-    plot_model(model, to_file=db_name+"_models/"+save_name+"/"+save_name+".png")
+    mk_dir(db_name + "_models")
+    mk_dir(db_name + "_models/" + save_name)
+    mk_dir(db_name + "_checkpoints")
+    plot_model(model, to_file=db_name + "_models/" + save_name + "/" + save_name + ".png")
 
-    with open(os.path.join(db_name+"_models/"+save_name, save_name+'.json'), "w") as f:
+    with open(os.path.join(db_name + "_models/" + save_name, save_name + '.json'), "w") as f:
         f.write(model.to_json())
 
-    
     decaylearningrate = TYY_callbacks.DecayLearningRate(start_decay_epoch)
 
-    callbacks = [ModelCheckpoint(db_name+"_checkpoints/weights.{epoch:02d}-{val_loss:.2f}.hdf5",
+    callbacks = [ModelCheckpoint(db_name + "_checkpoints/weights.{epoch:02d}-{val_loss:.2f}.hdf5",
                                  monitor="val_loss",
                                  verbose=1,
                                  save_best_only=True,
                                  mode="auto"), decaylearningrate
-                        ]
+                 ]
 
     logging.debug("Running training...")
-    
-
 
     data_num = len(x_data)
     indexes = np.arange(data_num)
@@ -114,22 +109,22 @@ def main():
     x_data = x_data[indexes]
     y_data_a = y_data_a[indexes]
     train_num = int(data_num * (1 - validation_split))
-    
+
     x_train = x_data[:train_num]
     x_test = x_data[train_num:]
     y_train_a = y_data_a[:train_num]
     y_test_a = y_data_a[train_num:]
 
-
     hist = model.fit_generator(generator=data_generator_reg(X=x_train, Y=y_train_a, batch_size=batch_size),
-                                   steps_per_epoch=train_num // batch_size,
-                                   validation_data=(x_test, [y_test_a]),
-                                   epochs=nb_epochs, verbose=1,
-                                   callbacks=callbacks)
+                               steps_per_epoch=train_num // batch_size,
+                               validation_data=(x_test, [y_test_a]),
+                               epochs=nb_epochs, verbose=1,
+                               callbacks=callbacks)
 
     logging.debug("Saving weights...")
-    model.save_weights(os.path.join(db_name+"_models/"+save_name, save_name+'.h5'), overwrite=True)
-    pd.DataFrame(hist.history).to_hdf(os.path.join(db_name+"_models/"+save_name, 'history_'+save_name+'.h5'), "history")
+    model.save_weights(os.path.join(db_name + "_models/" + save_name, save_name + '.h5'), overwrite=True)
+    pd.DataFrame(hist.history).to_hdf(os.path.join(db_name + "_models/" + save_name, 'history_' + save_name + '.h5'),
+                                      "history")
 
 
 if __name__ == '__main__':
