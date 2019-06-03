@@ -39,20 +39,3 @@ fun FragmentActivity.showToast(text: String) {
     runOnUiThread { Toast.makeText(this, text, Toast.LENGTH_SHORT).show() }
 }
 
-
-fun AppCompatActivity.takePhotoLaterThan7(absolutePath: String) {
-    val mCameraTempUri: Uri
-    try {
-        val values = ContentValues(1)
-        values.put(MediaStore.Images.Media.MIME_TYPE, "image/jpg")
-        values.put(MediaStore.Images.Media.DATA, absolutePath)
-        mCameraTempUri = contentResolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values)!!
-        val intent = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
-        intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION).addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION)
-        intent.putExtra(MediaStore.EXTRA_OUTPUT, mCameraTempUri)
-        intent.putExtra(MediaStore.EXTRA_VIDEO_QUALITY, 1)
-        startActivityForResult(intent, TAKE_PHOTO_REQUEST)
-    } catch (e: Exception) {
-        e.printStackTrace()
-    }
-}

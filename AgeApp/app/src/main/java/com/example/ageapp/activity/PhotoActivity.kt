@@ -2,6 +2,7 @@ package com.example.ageapp.activity
 
 import android.Manifest
 import android.app.Activity
+import android.content.ContentValues
 import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
@@ -22,6 +23,7 @@ import java.io.File
 import java.io.FileInputStream
 import android.graphics.Matrix
 import android.graphics.PointF
+import android.support.v4.app.ActivityCompat
 import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
@@ -144,7 +146,6 @@ class PhotoActivity : AppCompatActivity(), View.OnClickListener {
                     )
                     myImageView.setImgBitmap(bitmap!!)
 
-
                     val permission = ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE)
                     if (permission != PackageManager.PERMISSION_GRANTED) {
                         requestWriteStoragePermission()
@@ -178,10 +179,52 @@ class PhotoActivity : AppCompatActivity(), View.OnClickListener {
     }
 
 
+    private fun takePhotoLaterThan7(absolutePath: String) {
+        val mCameraTempUri: Uri
+        try {
+            val values = ContentValues(1)
+            values.put(MediaStore.Images.Media.MIME_TYPE, "image/jpg")
+            values.put(MediaStore.Images.Media.DATA, absolutePath)
+
+            grantStoragePermission()
+            mCameraTempUri = contentResolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values)!!
+
+            val intent = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
+            intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION).addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION)
+            intent.putExtra(MediaStore.EXTRA_OUTPUT, mCameraTempUri)
+            intent.putExtra(MediaStore.EXTRA_VIDEO_QUALITY, 1)
+            startActivityForResult(intent, TAKE_PHOTO_REQUEST)
+        } catch (e: java.lang.Exception) {
+            e.printStackTrace()
+        }
+    }
+
+
+    private fun grantStoragePermission(): Boolean {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            if (checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                == PackageManager.PERMISSION_GRANTED
+            ) {
+                Log.v("aaa", "Permission is granted")
+                return true
+            } else {
+
+                Log.v("aaa", "Permission is revoked")
+                ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.WRITE_EXTERNAL_STORAGE), 1);
+                return false
+            }
+        } else { //permission is automatically granted on sdk<23 upon installation
+            Log.v("aaa", "Permission is granted");
+            return true
+        }
+    }
+
+
     private fun requestWriteStoragePermission() {
         if (shouldShowRequestPermissionRationale(Manifest.permission.WRITE_EXTERNAL_STORAGE)) {
             ConfirmationDialog().show(supportFragmentManager, "dialog")
         } else {
+
             requestPermissions(
                 arrayOf(Manifest.permission.WRITE_EXTERNAL_STORAGE),
                 REQUEST_WRITE_EXTERNAL_STORAGE_PERMISSION
