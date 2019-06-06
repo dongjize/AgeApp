@@ -274,7 +274,7 @@ class PhotoActivity : AppCompatActivity(), View.OnClickListener {
         val confidences: Array<Float?> = triple.third
         val newBitmaps: ArrayList<Bitmap> = ArrayList()
         for (i in pointFList.indices) {
-            if (pointFList[i] != null && eyesDistances[i] != null && eyesDistances[i]!! > bitmap.width / 1000 && confidences[i]!! > 0) {
+            if (pointFList[i] != null && eyesDistances[i] != null && confidences[i]!! >= 0.51) {
                 val pointF = pointFList[i]!!
                 val eyesDistance = eyesDistances[i]!!
                 val newBitmap: Bitmap = getCroppedBitmap(bitmap, pointF, eyesDistance)
